@@ -6,6 +6,7 @@ package frc.robot.subsystems.swervedrive;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.PathPlannerAuto;
+import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.PathConstraints;
@@ -15,8 +16,11 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.CurrentUnit;
+import edu.wpi.first.units.measure.Current;
 // import edu.wpi.first.networktables.DoubleArraySubscriber;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
@@ -25,6 +29,8 @@ import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Config;
 import frc.robot.Constants.AutonConstants;
+
+import static edu.wpi.first.units.Units.Amps;
 
 // import java.io.Closeable;
 import java.io.File;
@@ -134,7 +140,9 @@ public class SwerveSubsystem extends SubsystemBase
   {
     // Load the RobotConfig from the GUI settings. You should probably
     // store this in your Constants file ????
-    RobotConfig config;
+
+    // tmp
+    RobotConfig config = new RobotConfig(30, 5, new ModuleConfig(1.969, 5.45 , 1.19, DCMotor.getNEO(1), 40, 1));
     try{
       config = RobotConfig.fromGUISettings();
     } catch (Exception e) {

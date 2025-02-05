@@ -7,8 +7,12 @@ package frc.robot.subsystems;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class ArmSubsystem extends SubsystemBase {
-  /** Creates a new MountedArm. */
-  public ArmSubsystem() {}
+  private final int motor_shoulder = 0;
+  private final int motor_elbow = 1;
+  /** Creates a new ArmSubsystem. */
+  public ArmSubsystem() {
+    // eklemli
+  }
 
   @Override
   public void periodic() {

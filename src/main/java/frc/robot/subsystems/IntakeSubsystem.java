@@ -12,7 +12,9 @@ public class IntakeSubsystem extends SubsystemBase {
   private final int motor_extend = 0;
   private final int motor_intake = 1;
   /** Creates a new IntakeSubsystem. */
-  public IntakeSubsystem() {}
+  public IntakeSubsystem() {
+    
+  }
 
   @Override
   public void periodic() {

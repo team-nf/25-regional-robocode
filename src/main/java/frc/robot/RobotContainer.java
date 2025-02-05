@@ -8,11 +8,15 @@ import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.Autos;
 import frc.robot.subsystems.ArmSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
+import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import frc.robot.subsystems.ElevatorSubsystem;
+import frc.robot.subsystems.GripperSubsystem;
 
 import java.io.File;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -28,6 +32,8 @@ public class RobotContainer {
   private final IntakeSubsystem m_intake = new IntakeSubsystem();
   private final ArmSubsystem m_shooter = new ArmSubsystem();
   private final ElevatorSubsystem m_elevator = new ElevatorSubsystem();
+  private final GripperSubsystem m_gripper = new GripperSubsystem();
+  private final SwerveSubsystem m_drivebase = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(), "swerve/teamnf"));
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController m_driverController =
@@ -37,6 +43,17 @@ public class RobotContainer {
   public RobotContainer() {
     // Configure the trigger bindings
     configureBindings();
+
+    double driveK = 1;
+    double angleK = 0.85;
+    Command driveRobotOrientedAngularVelocity = m_drivebase.robotCentricDriveCommand(
+        () -> (MathUtil.applyDeadband(m_driverController.getLeftY(), 0.2) * driveK),
+        () -> MathUtil.applyDeadband(m_driverController.getLeftX(), 0.2) * driveK,
+        () -> m_driverController.getRightX() * angleK);
+
+    m_drivebase.setDefaultCommand(driveRobotOrientedAngularVelocity);
+
+
   }
 
   /**
@@ -49,6 +66,8 @@ public class RobotContainer {
    * joysticks}.
    */
   private void configureBindings() {
+    //m_gripper.controlWithTriggers(m_driverController.getLeftTriggerAxis()).onlyIf(() -> m_driverController.getLeftTriggerAxis() > 0.2);
+    //m_gripper.controlWithTriggers(-m_driverController.getRightTriggerAxis()).onlyIf(() -> m_driverController.getRightTriggerAxis() > 0.2);
     
   }
 
