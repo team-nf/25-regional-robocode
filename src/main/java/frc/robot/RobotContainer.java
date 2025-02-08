@@ -44,14 +44,20 @@ public class RobotContainer {
     // Configure the trigger bindings
     configureBindings();
 
-    double driveK = 1;
+    double driveK = 0.6;
     double angleK = 0.85;
     Command driveRobotOrientedAngularVelocity = m_drivebase.robotCentricDriveCommand(
         () -> (MathUtil.applyDeadband(m_driverController.getLeftY(), 0.2) * driveK),
         () -> MathUtil.applyDeadband(m_driverController.getLeftX(), 0.2) * driveK,
         () -> m_driverController.getRightX() * angleK);
 
-    m_drivebase.setDefaultCommand(driveRobotOrientedAngularVelocity);
+    Command driveFieldOrientedDirectAngle = m_drivebase.driveCommand(
+      () -> MathUtil.applyDeadband(m_driverController.getLeftY(), 0.2) * driveK,
+      () -> MathUtil.applyDeadband(m_driverController.getLeftX(), 0.2) * driveK,
+      () -> m_driverController.getRightX() * angleK,
+      () -> m_driverController.getRightY() * angleK);
+
+    m_drivebase.setDefaultCommand(driveFieldOrientedDirectAngle);
 
 
   }

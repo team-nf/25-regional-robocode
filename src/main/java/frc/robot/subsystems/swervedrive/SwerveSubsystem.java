@@ -31,6 +31,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Config;
 import frc.robot.Constants.AutonConstants;
 
 import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.Inches;
 
 // import java.io.Closeable;
 import java.io.File;
@@ -107,7 +108,7 @@ public class SwerveSubsystem extends SubsystemBase
     System.out.println("}");
 
     // Configure the Telemetry before creating the SwerveDrive to avoid unnecessary objects being created.
-    SwerveDriveTelemetry.verbosity = TelemetryVerbosity.LOW;
+    SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH;
     try
     {
       // swerveDrive = new SwerveParser(directory).createSwerveDrive(maximumSpeed);
@@ -142,7 +143,13 @@ public class SwerveSubsystem extends SubsystemBase
     // store this in your Constants file ????
 
     // tmp
-    RobotConfig config = new RobotConfig(30, 5, new ModuleConfig(1.969, 5.45 , 1.19, DCMotor.getNEO(1), 40, 1));
+    Translation2d LFTranslation2d = new Translation2d(10.64271655, 10.64271655);
+    Translation2d RFTranslation2d = new Translation2d(-10.64271655, 10.64271655);
+    Translation2d LBTranslation2d = new Translation2d(10.64271655, -10.64271655);
+    Translation2d RBTranslation2d = new Translation2d(-10.64271655, -10.64271655);
+    ModuleConfig module_config = new ModuleConfig(1.969, 5.45 , 1.19, DCMotor.getNEO(1), 40, 1);
+    RobotConfig config = new RobotConfig(30, 5, module_config, 
+        LFTranslation2d, RFTranslation2d, LBTranslation2d, RBTranslation2d);
     try{
       config = RobotConfig.fromGUISettings();
     } catch (Exception e) {
