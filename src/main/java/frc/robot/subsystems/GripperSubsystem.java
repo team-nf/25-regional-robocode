@@ -15,10 +15,11 @@ import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants.GripperConstants;
 
 
 public class GripperSubsystem extends SubsystemBase {
-  private final SparkMax m_vortex = new SparkMax(34, MotorType.kBrushless);
+  private final SparkMax m_vortex = new SparkMax(GripperConstants.VORTEX_SPARK_MAX_ID, MotorType.kBrushless);
   private SparkMaxConfig motorConfig;
   private SparkClosedLoopController vortexPID;
   // encoder??
@@ -33,8 +34,8 @@ public class GripperSubsystem extends SubsystemBase {
      * no config is needed, yet adjusting conversion factors is needed. 
      */
     motorConfig.encoder
-      .positionConversionFactor(0)
-      .velocityConversionFactor(0);
+      .positionConversionFactor(GripperConstants.POSITION_CONVERSION_FACTOR)
+      .velocityConversionFactor(GripperConstants.VELOCITY_CONVERSION_FACTOR);
 
     /**
      * Configure the closed loop controller. The feedback sensor is the primary encoder.
@@ -42,17 +43,17 @@ public class GripperSubsystem extends SubsystemBase {
      */
     motorConfig.closedLoop
       .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-      .p(0)
-      .i(0)
-      .d(0)
-      .velocityFF(0)
-      .outputRange(0, 0);
+      .p(GripperConstants.kP)
+      .i(GripperConstants.kI)
+      .d(GripperConstants.kD)
+      .velocityFF(GripperConstants.kFF)
+      .outputRange(GripperConstants.LOW_OUT, GripperConstants.HIGH_OUT);
 
     motorConfig.closedLoop.maxMotion
     // Set MAXMotion parameters for velocity control
-      .maxAcceleration(0)
-      .maxVelocity(0)
-      .allowedClosedLoopError(0);
+      .maxAcceleration(GripperConstants.MAX_ACC)
+      .maxVelocity(GripperConstants.MAX_VEL)
+      .allowedClosedLoopError(GripperConstants.ALLOWED_ERR);
 
     // Apply the configuration to the Spark MAX
     m_vortex.configure(motorConfig, com.revrobotics.spark.SparkBase.ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);

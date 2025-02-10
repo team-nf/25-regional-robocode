@@ -15,10 +15,11 @@ import com.ctre.phoenix6.signals.GravityTypeValue;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants.ElevatorConstants;
 
 public class ElevatorSubsystem extends SubsystemBase {
-  // Kraken X60
-  private final TalonFX m_motor = new TalonFX(10);
+  // Falcon
+  private final TalonFX m_motor = new TalonFX(ElevatorConstants.DEVICE_ID);
 
   private final DutyCycleOut m_motorOut = new DutyCycleOut(0);
   private final VoltageOut m_motorVoltage = new VoltageOut(0);
@@ -32,10 +33,11 @@ public class ElevatorSubsystem extends SubsystemBase {
   public ElevatorSubsystem() {
     var slot0motorConfigs = m_motorConfig.Slot0;
     slot0motorConfigs.withGravityType(GravityTypeValue.Elevator_Static);
-    slot0motorConfigs.kV = 0;
-    slot0motorConfigs.kP = 0;
-    slot0motorConfigs.kI = 0;
-    slot0motorConfigs.kD = 0;
+    slot0motorConfigs.kV = ElevatorConstants.kV;
+    slot0motorConfigs.kS = ElevatorConstants.kS;
+    slot0motorConfigs.kP = ElevatorConstants.kP;
+    slot0motorConfigs.kI = ElevatorConstants.kI;
+    slot0motorConfigs.kD = ElevatorConstants.kD;
 
     // Apply configs
     m_motor.getConfigurator().apply(slot0motorConfigs, 0.05);
