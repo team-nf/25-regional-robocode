@@ -12,6 +12,8 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 
+import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -23,6 +25,9 @@ public class GripperSubsystem extends SubsystemBase {
   private SparkMaxConfig motorConfig;
   private SparkClosedLoopController vortexPID;
   // encoder??
+
+  private final DigitalInput m_algeaSensor = new DigitalInput(2);
+  private final DigitalInput m_coralSensor = new DigitalInput(3);
 
   /** Creates a new GripperSubsystem. */
   public GripperSubsystem() {
@@ -83,5 +88,8 @@ public class GripperSubsystem extends SubsystemBase {
     // Telemetry
     SmartDashboard.putNumber("Current Velocity", m_vortex.getEncoder().getVelocity());
     SmartDashboard.putNumber("Encoder Position", m_vortex.getEncoder().getPosition());
+
+    SmartDashboard.putData("Has Coral?: ", m_coralSensor);
+    SmartDashboard.putData("Has Algea", m_algeaSensor);
   }
 }
