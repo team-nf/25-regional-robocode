@@ -2,7 +2,7 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.subsystems;
+package frc.robot.subsystems.arm;
 
 import com.ctre.phoenix6.hardware.TalonFX;
 
@@ -22,9 +22,9 @@ public class ArmSubsystem extends SubsystemBase {
   private final TalonFX m_motorElbow = new TalonFX(ArmConstants.ELBOW_DEVICE_ID);
 
   private final DutyCycleEncoder m_encoderShoulder = new DutyCycleEncoder(ArmConstants.SHOULDER_ENCODER_ID, 
-                                              360, ArmConstants.SHOULDER_ENCODER_INIT); 
+                                ArmConstants.SHOULDER_ENCODER_RANGE, ArmConstants.SHOULDER_ENCODER_INIT); 
   private final DutyCycleEncoder m_encoderElbow = new DutyCycleEncoder(ArmConstants.ELBOW_ENCODER_ID, 
-                                              360, ArmConstants.ELBOW_ENCODER_INIT);
+                                      ArmConstants.ELBOW_ENCODER_RANGE, ArmConstants.ELBOW_ENCODER_INIT);
 
   /** Creates a new ArmSubsystem. */
   public ArmSubsystem() {

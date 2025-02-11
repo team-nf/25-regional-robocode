@@ -6,8 +6,8 @@ package frc.robot;
 
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.Autos;
-import frc.robot.subsystems.ArmSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
+import frc.robot.subsystems.arm.ArmSubsystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import frc.robot.subsystems.ElevatorSubsystem;
 import frc.robot.subsystems.GripperSubsystem;
@@ -17,6 +17,10 @@ import java.io.File;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -29,15 +33,17 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
  */
 public class RobotContainer {
   // The robot's subsystems and commands are defined here...
+  private final SwerveSubsystem m_drivebase = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(), "swerve/teamnf"));
+  
   private final IntakeSubsystem m_intake = new IntakeSubsystem();
-  private final ArmSubsystem m_shooter = new ArmSubsystem();
+  private final ArmSubsystem m_arm = new ArmSubsystem();
   private final ElevatorSubsystem m_elevator = new ElevatorSubsystem();
   private final GripperSubsystem m_gripper = new GripperSubsystem();
-  private final SwerveSubsystem m_drivebase = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(), "swerve/teamnf"));
+
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController m_driverController =
-      new CommandXboxController(OperatorConstants.kDriverControllerPort);
+      new CommandXboxController(OperatorConstants.CONTROLLER_PORT);
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
@@ -59,7 +65,19 @@ public class RobotContainer {
 
     m_drivebase.setDefaultCommand(driveFieldOrientedDirectAngle);
 
+    // Simulation
+    if (RobotBase.isSimulation()) {
+    Mechanism2d arm = new Mechanism2d(20, 20);
+    MechanismRoot2d armRoot = arm.getRoot("armroot", 10, 0);
 
+    var m_mechElevator = armRoot.append(new MechanismLigament2d("elevator", 8, 90));
+    var m_mechCage = armRoot.append(new MechanismLigament2d("cage", 1, 90));
+    var m_shoulder = m_mechCage.append(new MechanismLigament2d("shoulder", 5, -20));
+    var m_elbow = m_shoulder.append(new MechanismLigament2d("elbow", 4, 0));
+    var m_wrist = m_elbow.append(new MechanismLigament2d("wrist", 2, 15));
+
+    SmartDashboard.putData("Mech2d", arm);
+    }
   }
 
   /**
@@ -74,8 +92,12 @@ public class RobotContainer {
   private void configureBindings() {
     //m_gripper.controlWithTriggers(m_driverController.getLeftTriggerAxis()).onlyIf(() -> m_driverController.getLeftTriggerAxis() > 0.2);
     //m_gripper.controlWithTriggers(-m_driverController.getRightTriggerAxis()).onlyIf(() -> m_driverController.getRightTriggerAxis() > 0.2);
-    
+    if (RobotBase.isSimulation()) {
+    //m_driverController.a().onTrue(m_elevator.setPositionSimulation());
+    //m_driverController.a().onFalse(m_elevator.setPosition(0.2));  
+    }
   }
+
 
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
@@ -84,6 +106,6 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
-    return Autos.exampleAuto(m_elevator);
+    return Autos.exampleAuto(m_drivebase);
   }
 }
