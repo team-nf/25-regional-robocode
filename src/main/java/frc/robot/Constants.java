@@ -110,15 +110,17 @@ public final class Constants {
     public static final double EL_ENC_CONV_FACT = 0;
   }
   public static class GripperConstants {
-    public static final int VORTEX_SPARK_MAX_ID = 34;
+    public static final int DEVICE_ID = 34;
     
     public static final double POSITION_CONVERSION_FACTOR = 0;
     public static final double VELOCITY_CONVERSION_FACTOR = 0;
 
-    public static final double kP = 0;
+    public static final double kP = 0.11;
     public static final double kI = 0;
     public static final double kD = 0;
-    public static final double kFF = 0;
+    public static final double kV = 0.12;
+    public static final double kS = 0.1;
+    public static final double kPFV = 8.0;
 
     public static final double MAX_ACC = 0;
     public static final double MAX_VEL = 0;
