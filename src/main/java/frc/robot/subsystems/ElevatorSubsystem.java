@@ -23,9 +23,11 @@ import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.motorcontrol.Talon;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
+import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.wpilibj.simulation.EncoderSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ElevatorConstants;
@@ -45,17 +47,18 @@ public class ElevatorSubsystem extends SubsystemBase {
 
   private final DCMotor m_falcon = DCMotor.getFalcon500(1).withReduction(ElevatorConstants.GEAR_REDUCTION);
   private final LinearSystem<N2, N1, N2> m_plant = LinearSystemId.createElevatorSystem(m_falcon,
-                                           ElevatorConstants.CARRIAGE_MASS.magnitude(), 
-                                          ElevatorConstants.DRIVING_DRUM_RADIUS, 1);
+  ElevatorConstants.CARRIAGE_MASS.magnitude(), 
+  ElevatorConstants.DRIVING_DRUM_RADIUS, 1);
   
-
-  // Simulation class
+  
+  // Simulation
+  private final DCMotorSim m_falconSim = new DCMotorSim(m_plant, m_falcon);
   private final ElevatorSim m_elevatorSim = new ElevatorSim(
     m_plant, 
     m_falcon, 
     ElevatorConstants.MIN_HEIGHT.magnitude(), ElevatorConstants.MIN_HEIGHT.magnitude(), 
     true, 
-    ElevatorConstants.MIN_HEIGHT.magnitude() * 1.2, null);
+    ElevatorConstants.MIN_HEIGHT.magnitude() * 1.2);
   private final TalonFXSimState m_motorSim = m_motor.getSimState();
 
   /** Creates a new ElevatorSubsystem. */
@@ -108,6 +111,8 @@ public class ElevatorSubsystem extends SubsystemBase {
   /** Advance the simulation. */
   @Override
   public void simulationPeriodic() {
+    m_motorSim.setSupplyVoltage(RobotController.getBatteryVoltage());
+    
     // In this method, we update our simulation of what our elevator is doing
     // First, we set our "inputs" (position)
     m_elevatorSim.setInput(m_motorSim.getMotorVoltage());
@@ -116,10 +121,12 @@ public class ElevatorSubsystem extends SubsystemBase {
     m_elevatorSim.update(0.020);
 
     // Finally, we set our simulated encoder's readings and simulated battery voltage
-    //m_motorSim.setRawRotorPosition(m_elevatorSim.getPositionMeters()); // olmaz.
+    m_motorSim.setRawRotorPosition(m_falconSim.getAngularPositionRotations() / ElevatorConstants.GEAR_REDUCTION); 
 
     // SimBattery estimates loaded battery voltages
     RoboRioSim.setVInVoltage(
         BatterySim.calculateDefaultBatteryLoadedVoltage(m_elevatorSim.getCurrentDrawAmps()));
+
+    SmartDashboard.putNumberArray("Elevator Simulator Output", m_elevatorSim.getOutput().getData());
   }
 }

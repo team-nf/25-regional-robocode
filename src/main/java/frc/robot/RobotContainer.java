@@ -63,20 +63,27 @@ public class RobotContainer {
       () -> m_driverController.getRightX() * angleK,
       () -> m_driverController.getRightY() * angleK);
 
-    m_drivebase.setDefaultCommand(driveFieldOrientedDirectAngle);
-
+    if (RobotBase.isReal()) {
+      m_drivebase.setDefaultCommand(driveFieldOrientedDirectAngle);
+    } else {
+    m_drivebase.setDefaultCommand(m_drivebase.simDriveCommand( 
+      () -> (MathUtil.applyDeadband(m_driverController.getLeftY(), 0.2) * driveK),
+      () -> MathUtil.applyDeadband(m_driverController.getLeftX(), 0.2) * driveK,
+      () -> m_driverController.getRightX() * angleK));
+    }
     // Simulation
     if (RobotBase.isSimulation()) {
-    Mechanism2d arm = new Mechanism2d(20, 20);
-    MechanismRoot2d armRoot = arm.getRoot("armroot", 10, 0);
+      // Herhalde kullanmayız
+      Mechanism2d arm = new Mechanism2d(20, 20);
+      MechanismRoot2d armRoot = arm.getRoot("armroot", 10, 0);
 
-    var m_mechElevator = armRoot.append(new MechanismLigament2d("elevator", 8, 90));
-    var m_mechCage = armRoot.append(new MechanismLigament2d("cage", 1, 90));
-    var m_shoulder = m_mechCage.append(new MechanismLigament2d("shoulder", 5, -20));
-    var m_elbow = m_shoulder.append(new MechanismLigament2d("elbow", 4, 0));
-    var m_wrist = m_elbow.append(new MechanismLigament2d("wrist", 2, 15));
+      var m_mechElevator = armRoot.append(new MechanismLigament2d("elevator", 8, 90));
+      var m_mechCage = armRoot.append(new MechanismLigament2d("cage", 1, 90));
+      var m_shoulder = m_mechCage.append(new MechanismLigament2d("shoulder", 5, -20));
+      var m_elbow = m_shoulder.append(new MechanismLigament2d("elbow", 4, 0));
+      var m_wrist = m_elbow.append(new MechanismLigament2d("wrist", 2, 15));
 
-    SmartDashboard.putData("Mech2d", arm);
+      SmartDashboard.putData("Mech2d", arm);
     }
   }
 
@@ -93,8 +100,8 @@ public class RobotContainer {
     //m_gripper.controlWithTriggers(m_driverController.getLeftTriggerAxis()).onlyIf(() -> m_driverController.getLeftTriggerAxis() > 0.2);
     //m_gripper.controlWithTriggers(-m_driverController.getRightTriggerAxis()).onlyIf(() -> m_driverController.getRightTriggerAxis() > 0.2);
     if (RobotBase.isSimulation()) {
-    //m_driverController.a().onTrue(m_elevator.setPositionSimulation());
-    //m_driverController.a().onFalse(m_elevator.setPosition(0.2));  
+    m_driverController.a().onTrue(m_elevator.setPositionSimulation());
+    m_driverController.a().onFalse(m_elevator.setPosition(0.2));  
     }
   }
 

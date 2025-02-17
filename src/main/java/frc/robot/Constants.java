@@ -68,7 +68,7 @@ public final class Constants {
   }
   public static class ArmConstants {
     public static final int SHOULDER_DEVICE_ID = 12;
-    public static final int ELBOW_DEVICE_ID = 13;
+    public static final int ELBOW_DEVICE_ID = 13; 
 
     public static final int SHOULDER_ENCODER_ID = 0;
     public static final double SHOULDER_ENCODER_RANGE = 360;
@@ -78,17 +78,36 @@ public final class Constants {
     public static final double ELBOW_ENCODER_RANGE = 360;
     public static final double ELBOW_ENCODER_INIT = 0;
 
-    public static final double kPS = 0;
+    // Shoulder
+    public static final double kPS = 10;
     public static final double kIS = 0;
     public static final double kDS = 0;
     public static final double kSS = 0;
     public static final double kVS = 0;
 
-    public static final double kPE = 0;
+    public static final double GEARING_SH = 173;
+    public static final double SHOULDER_MASS = 6.5;
+    public static final double SHOULDER_LENGTH = 0.345;
+    public static final double SH_MIN_ANGLE_RADS = Units.degreesToRadians(-180);
+    public static final double SH_MAX_ANGLE_RADS = Units.degreesToRadians(180);
+
+    public static final double SH_ENC_CONV_FACT = 0;
+
+
+    // Elbow
+    public static final double kPE = 10;
     public static final double kIE = 0;
     public static final double kDE = 0;
     public static final double kSE = 0;
     public static final double kVE = 0;
+
+    public static final double GEARING_EL = 97;
+    public static final double ELBOW_MASS = 4.0;
+    public static final double ELBOW_LENGTH = 0.345;
+    public static final double EL_MIN_ANGLE_RADS = Units.degreesToRadians(-180);
+    public static final double EL_MAX_ANGLE_RADS = Units.degreesToRadians(180);
+
+    public static final double EL_ENC_CONV_FACT = 0;
   }
   public static class GripperConstants {
     public static final int VORTEX_SPARK_MAX_ID = 34;

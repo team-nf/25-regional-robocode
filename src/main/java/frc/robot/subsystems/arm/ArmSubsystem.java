@@ -6,9 +6,11 @@ package frc.robot.subsystems.arm;
 
 import com.ctre.phoenix6.hardware.TalonFX;
 
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
 import frc.robot.Constants.ArmConstants;
 
 /**
@@ -26,6 +28,10 @@ public class ArmSubsystem extends SubsystemBase {
   private final DutyCycleEncoder m_encoderElbow = new DutyCycleEncoder(ArmConstants.ELBOW_ENCODER_ID, 
                                       ArmConstants.ELBOW_ENCODER_RANGE, ArmConstants.ELBOW_ENCODER_INIT);
 
+  private final DJArmSimulations m_simulations = new DJArmSimulations(
+    DCMotor.getKrakenX60(1), DCMotor.getKrakenX60(1), m_motorShoulder, m_motorElbow
+    );
+
   /** Creates a new ArmSubsystem. */
   public ArmSubsystem() {
     // eklemli
@@ -38,5 +44,10 @@ public class ArmSubsystem extends SubsystemBase {
     SmartDashboard.putBoolean("Encoder 2 Connected?", m_encoderElbow.isConnected());
     SmartDashboard.putNumber("Encoder 1:", m_encoderShoulder.get());
     SmartDashboard.putNumber("Encoder 2:", m_encoderElbow.get());
+  }
+
+  @Override
+  public void simulationPeriodic() {
+    m_simulations.update();
   }
 }
