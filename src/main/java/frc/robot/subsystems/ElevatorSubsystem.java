@@ -81,7 +81,7 @@ public class ElevatorSubsystem extends SubsystemBase {
    */
   public Command setPositionWithVoltComp(double position) {
     m_positionVoltageControl.Slot = 0;
-    return run(() -> m_motor.setControl(m_positionVoltageControl.withPosition(position)));
+    return run(() -> m_motor.setControl(m_positionVoltageControl.withPosition(position/0.125 * 11.99)));
   }
 
   /**
@@ -98,6 +98,10 @@ public class ElevatorSubsystem extends SubsystemBase {
 
   public Command setPositionSimulation(){
     return run(() -> setPosition(1.25));
+  }
+
+  public void stop() {
+    m_motor.stopMotor();
   }
 
   @Override
