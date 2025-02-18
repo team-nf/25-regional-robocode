@@ -8,6 +8,7 @@ import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.Autos;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.arm.ArmSubsystem;
+import frc.robot.subsystems.arm.ArmVisualizer;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import frc.robot.subsystems.ElevatorSubsystem;
 import frc.robot.subsystems.GripperSubsystem;
@@ -35,9 +36,12 @@ public class RobotContainer {
   // The robot's subsystems and commands are defined here...
   private final SwerveSubsystem m_drivebase = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(), "swerve/teamnf"));
   
-  private final IntakeSubsystem m_intake = new IntakeSubsystem();
-  private final ArmSubsystem m_arm = new ArmSubsystem();
-  private final ElevatorSubsystem m_elevator = new ElevatorSubsystem();
+  // Mechanism Visuals for Elevator - Arm - Gripper
+  private final ArmVisualizer armVisualizions = new ArmVisualizer("Double-Jointed Arm", null);
+
+  //private final IntakeSubsystem m_intake = new IntakeSubsystem();
+  private final ArmSubsystem m_arm = new ArmSubsystem(armVisualizions);
+  private final ElevatorSubsystem m_elevator = new ElevatorSubsystem(armVisualizions);
   private final GripperSubsystem m_gripper = new GripperSubsystem();
 
 
@@ -83,7 +87,7 @@ public class RobotContainer {
       var m_elbow = m_shoulder.append(new MechanismLigament2d("elbow", 4, 0));
       var m_wrist = m_elbow.append(new MechanismLigament2d("wrist", 2, 15));
 
-      SmartDashboard.putData("Mech2d", arm);
+      //SmartDashboard.putData("Mech2d", arm);
     }
   }
 

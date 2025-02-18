@@ -31,6 +31,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ElevatorConstants;
+import frc.robot.subsystems.arm.ArmVisualizer;
 
 public class ElevatorSubsystem extends SubsystemBase {
   // Falcon
@@ -61,8 +62,10 @@ public class ElevatorSubsystem extends SubsystemBase {
     ElevatorConstants.MIN_HEIGHT.magnitude() * 1.2);
   private final TalonFXSimState m_motorSim = m_motor.getSimState();
 
+  private final ArmVisualizer m_visualizer;
+
   /** Creates a new ElevatorSubsystem. */
-  public ElevatorSubsystem() {
+  public ElevatorSubsystem(ArmVisualizer visualizer) {
     var slot0motorConfigs = m_motorConfig.Slot0;
     slot0motorConfigs.withGravityType(GravityTypeValue.Elevator_Static);
     slot0motorConfigs.kV = ElevatorConstants.kV;
@@ -73,6 +76,8 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     // Apply configs
     m_motor.getConfigurator().apply(slot0motorConfigs, 0.05);
+
+    m_visualizer = visualizer;
   }
   
   /**
@@ -100,7 +105,7 @@ public class ElevatorSubsystem extends SubsystemBase {
   }
 
   public Command setPositionSimulation(){
-    return run(() -> setPosition(1.25));
+    return run(() -> {m_elevatorSim.setState(1.25, 1); });
   }
 
   @Override
@@ -128,5 +133,6 @@ public class ElevatorSubsystem extends SubsystemBase {
         BatterySim.calculateDefaultBatteryLoadedVoltage(m_elevatorSim.getCurrentDrawAmps()));
 
     SmartDashboard.putNumberArray("Elevator Simulator Output", m_elevatorSim.getOutput().getData());
+    m_visualizer.update(m_elevatorSim.getPositionMeters());
   }
 }

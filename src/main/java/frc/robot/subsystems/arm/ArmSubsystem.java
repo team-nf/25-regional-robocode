@@ -4,6 +4,8 @@
 
 package frc.robot.subsystems.arm;
 
+import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
+
 import com.ctre.phoenix6.hardware.TalonFX;
 
 import edu.wpi.first.math.system.plant.DCMotor;
@@ -32,10 +34,15 @@ public class ArmSubsystem extends SubsystemBase {
     DCMotor.getKrakenX60(1), DCMotor.getKrakenX60(1), m_motorShoulder, m_motorElbow
     );
 
+  private final ArmVisualizer m_visualizations;
+
   /** Creates a new ArmSubsystem. */
-  public ArmSubsystem() {
+  public ArmSubsystem(ArmVisualizer visualizer) {
+    m_visualizations = visualizer;
     // eklemli
   }
+
+  public LoggedMechanism2d getMechanism2d() {return m_visualizations.getMechanism2d();}
 
   @Override
   public void periodic() {
@@ -48,6 +55,8 @@ public class ArmSubsystem extends SubsystemBase {
 
   @Override
   public void simulationPeriodic() {
+    SmartDashboard.putData("Mech Arm", m_visualizations.getMechanism2d());
     m_simulations.update();
+    m_visualizations.update(m_simulations.shoulder().getAngleRads(), m_simulations.elbow().getAngleRads());
   }
 }

@@ -1,5 +1,6 @@
 package frc.robot.subsystems.arm;
 
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
@@ -51,8 +52,7 @@ public class DJArmSimulations {
             j1Plant, j1Motor, 
             1,  // gearing is defined in j1Plant, i think i shouldnt re-enter gearing
             ArmConstants.SHOULDER_LENGTH, 
-            ArmConstants.SH_MIN_ANGLE_RADS, ArmConstants.SH_MAX_ANGLE_RADS, true, 0,
-            0.0 // Add noise with a std-dev of 1 tick
+            ArmConstants.SH_MIN_ANGLE_RADS, ArmConstants.SH_MAX_ANGLE_RADS, true, 0 // Add noise with a std-dev of 1 tick
             );
         j1Sim = new DCMotorSim(j1Plant, j2Motor);
 
@@ -64,12 +64,12 @@ public class DJArmSimulations {
             j2Plant, j2Motor, 
             1, 
             ArmConstants.ELBOW_LENGTH, 
-            ArmConstants.EL_MIN_ANGLE_RADS, ArmConstants.EL_MAX_ANGLE_RADS, true, 0, 
-            0.0);
+            ArmConstants.EL_MIN_ANGLE_RADS, ArmConstants.EL_MAX_ANGLE_RADS, true, 0);
         j2Sim = new DCMotorSim(j2Plant, j2Motor);
 
+
         j1ControllerSimState = j1Controller.getSimState();
-        j2ControllerSimState = j2Controller.getSimState();        
+        j2ControllerSimState = j2Controller.getSimState();  
         
     }
 
