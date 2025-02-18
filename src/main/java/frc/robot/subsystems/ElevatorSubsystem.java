@@ -14,6 +14,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.system.LinearSystem;
@@ -94,6 +95,12 @@ public class ElevatorSubsystem extends SubsystemBase {
   public Command setPosition(double position) {
     m_positionControl.Slot = 0;
     return run(() -> m_motor.setControl(m_positionControl.withPosition(position/0.125 * 11.99)));
+  }
+
+  public Command setPositionWithJoystik(double control) {
+    SlewRateLimiter limiter = new SlewRateLimiter(.1);
+    double pos = limiter.calculate(control);
+    return run(() -> m_motor.setControl(m_positionVoltageControl.withPosition(pos/0.125 * 11.99)));
   }
 
   public Command setPositionSimulation(){

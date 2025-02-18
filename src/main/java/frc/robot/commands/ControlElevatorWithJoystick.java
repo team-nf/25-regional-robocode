@@ -9,7 +9,11 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.ElevatorSubsystem;
 
-/* (Muhtemelen inline yaparım) You should consider using the more terse Command factories API instead https://docs.wpilib.org/en/stable/docs/software/commandbased/organizing-command-based.html#defining-commands */
+/**
+ * (Muhtemelen inline yaparım) 
+ * In-line yaptım onu kullanıyoruz. Silecem bunu.
+ * You should consider using the more terse Command factories API instead https://docs.wpilib.org/en/stable/docs/software/commandbased/organizing-command-based.html#defining-commands 
+ */
 public class ControlElevatorWithJoystick extends Command {
   private final ElevatorSubsystem m_elevator;
   private final CommandXboxController m_controller;
@@ -31,6 +35,7 @@ public class ControlElevatorWithJoystick extends Command {
   @Override
   public void execute() {
     // Olur mu böyle hocam bilmiyorum.
+    // LeftY de yukarı yapınca pozitif mi oluyor bilmediğimden böyle yaptım ama bu şekil kalırsa asansör aşağı inemez
     var pos = m_slewRateLimiter.calculate(m_controller.getLeftY() < 0 ? -m_controller.getLeftY() : m_controller.getLeftY());
     m_elevator.setPosition(pos); // command olmayan bir metod kullanabilirim daha mantıklı zaten command açtım saçma sapan.
   }
