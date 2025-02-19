@@ -4,7 +4,6 @@
 
 package frc.robot.subsystems;
 
-import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.PositionDutyCycle;
@@ -14,18 +13,10 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N2;
-import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.system.plant.LinearSystemId;
-import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.motorcontrol.Talon;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
-import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
-import edu.wpi.first.wpilibj.simulation.EncoderSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -46,17 +37,15 @@ public class ElevatorSubsystem extends SubsystemBase {
 
   private final TalonFXConfiguration m_motorConfig = new TalonFXConfiguration();
 
-  private final DCMotor m_falcon = DCMotor.getFalcon500(1).withReduction(ElevatorConstants.GEAR_REDUCTION);
-  private final LinearSystem<N2, N1, N2> m_plant = LinearSystemId.createElevatorSystem(m_falcon,
-  ElevatorConstants.CARRIAGE_MASS.magnitude(), 
-  ElevatorConstants.DRIVING_DRUM_RADIUS, 1);
+  private final DCMotor m_falcon = DCMotor.getFalcon500(1);
   
   
   // Simulation
-  private final DCMotorSim m_falconSim = new DCMotorSim(m_plant, m_falcon);
   private final ElevatorSim m_elevatorSim = new ElevatorSim(
-    m_plant, 
     m_falcon, 
+    ElevatorConstants.GEAR_REDUCTION,
+    ElevatorConstants.CARRIAGE_MASS.magnitude(),
+    ElevatorConstants.DRIVING_DRUM_RADIUS,
     ElevatorConstants.MIN_HEIGHT.magnitude(), ElevatorConstants.MIN_HEIGHT.magnitude(), 
     true, 
     ElevatorConstants.MIN_HEIGHT.magnitude() * 1.2);
@@ -79,6 +68,10 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     m_visualizer = visualizer;
   }
+
+  public double getEncoderDistance() {
+    return m_motor.getPosition().getValueAsDouble() * ElevatorConstants.CONVERSION;
+  }
   
   /**
    * Incomplete.
@@ -89,7 +82,7 @@ public class ElevatorSubsystem extends SubsystemBase {
    */
   public Command setPositionWithVoltComp(double position) {
     m_positionVoltageControl.Slot = 0;
-    return run(() -> m_motor.setControl(m_positionVoltageControl.withPosition(position)));
+    return run(() -> m_motor.setControl(m_positionVoltageControl.withPosition(position / ElevatorConstants.CONVERSION)));
   }
 
   /**
@@ -105,7 +98,35 @@ public class ElevatorSubsystem extends SubsystemBase {
   }
 
   public Command setPositionSimulation(){
-    return run(() -> {m_elevatorSim.setState(1.25, 1); });
+    return run(() -> {m_elevatorSim.setState(1.25, 1);});
+  }
+
+  /**
+   * Gerekli mi bilmiyorum.
+   * @param goal
+   * @return
+   */
+  public Command reachGoalAndHold(double goal) {
+    return runEnd(() -> m_motor.setControl(m_positionVoltageControl.withPosition(goal / ElevatorConstants.CONVERSION)), () -> hold());
+  }
+  public void hold() {
+    // Gerekli mi bilmiyorum.. şimdilik boş, feedforward değerini vermem gerekiyor olabilir set 0 sorun çıkarabilir gibi hissettim.
+  }
+
+  /**
+   * Sets motor speed to 0 when command is interrupted.
+   * @param goal
+   * @return
+   */
+  public Command reachGoalAndStop(double goal) {
+    return runEnd(() -> m_motor.setControl(m_positionVoltageControl.withPosition(goal / ElevatorConstants.CONVERSION)), () -> stop());
+  }
+  public void stop() {
+    m_motor.set(0);
+  }
+
+  public Command reachGoal(double goal) {
+    return run(() -> m_motor.setControl(m_positionVoltageControl.withPosition(goal / ElevatorConstants.CONVERSION)));
   }
 
   @Override
@@ -126,7 +147,8 @@ public class ElevatorSubsystem extends SubsystemBase {
     m_elevatorSim.update(0.020);
 
     // Finally, we set our simulated encoder's readings and simulated battery voltage
-    m_motorSim.setRawRotorPosition(m_falconSim.getAngularPositionRotations() / ElevatorConstants.GEAR_REDUCTION); 
+    m_motorSim.setRawRotorPosition(m_elevatorSim.getPositionMeters() / ElevatorConstants.CONVERSION); 
+    m_motorSim.setRotorVelocity(m_elevatorSim.getVelocityMetersPerSecond() / ElevatorConstants.CONVERSION);
 
     // SimBattery estimates loaded battery voltages
     RoboRioSim.setVInVoltage(

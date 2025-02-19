@@ -1,17 +1,12 @@
 package frc.robot.subsystems.arm;
 
-import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N2;
-import edu.wpi.first.math.system.LinearSystem;
+
 import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
-import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -27,12 +22,6 @@ public class DJArmSimulations {
     private final DCMotor j1Motor;
     private final DCMotor j2Motor;
 
-    private final DCMotorSim j1Sim;
-    private final DCMotorSim j2Sim;
-    
-    private final LinearSystem<N2, N1, N2> j1Plant; 
-    private final LinearSystem<N2, N1, N2> j2Plant; 
-
     private final SingleJointedArmSim shoulderSim; 
     private final SingleJointedArmSim elbowSim; 
 
@@ -44,29 +33,17 @@ public class DJArmSimulations {
         j1Motor = j1GearBox;
         j2Motor = j2GearBox;
         
-        j1Plant = LinearSystemId.createSingleJointedArmSystem(
-            j1Motor, 
-            SingleJointedArmSim.estimateMOI(ArmConstants.SHOULDER_LENGTH, ArmConstants.SHOULDER_MASS), 
-            ArmConstants.GEARING_SH);
         shoulderSim = new SingleJointedArmSim(
-            j1Plant, j1Motor, 
-            1,  // gearing is defined in j1Plant, i think i shouldnt re-enter gearing
-            ArmConstants.SHOULDER_LENGTH, 
-            ArmConstants.SH_MIN_ANGLE_RADS, ArmConstants.SH_MAX_ANGLE_RADS, true, 0 // Add noise with a std-dev of 1 tick
-            );
-        j1Sim = new DCMotorSim(j1Plant, j2Motor);
+            j1Motor, ArmConstants.GEARING_SH, 
+            SingleJointedArmSim.estimateMOI(ArmConstants.SHOULDER_LENGTH, ArmConstants.SHOULDER_MASS), 
+            ArmConstants.SHOULDER_LENGTH, ArmConstants.SH_MIN_ANGLE_RADS, ArmConstants.SH_MAX_ANGLE_RADS, 
+            true, 0);
 
-        j2Plant = LinearSystemId.createSingleJointedArmSystem(
-            j2Motor, 
-            SingleJointedArmSim.estimateMOI(ArmConstants.ELBOW_LENGTH, ArmConstants.ELBOW_MASS), 
-            ArmConstants.GEARING_EL);
         elbowSim = new SingleJointedArmSim(
-            j2Plant, j2Motor, 
-            1, 
-            ArmConstants.ELBOW_LENGTH, 
-            ArmConstants.EL_MIN_ANGLE_RADS, ArmConstants.EL_MAX_ANGLE_RADS, true, 0);
-        j2Sim = new DCMotorSim(j2Plant, j2Motor);
-
+            j2Motor, ArmConstants.GEARING_EL, 
+            SingleJointedArmSim.estimateMOI(ArmConstants.ELBOW_LENGTH, ArmConstants.ELBOW_MASS),
+            ArmConstants.ELBOW_LENGTH, ArmConstants.EL_MIN_ANGLE_RADS, ArmConstants.EL_MAX_ANGLE_RADS, 
+            true, 0);
 
         j1ControllerSimState = j1Controller.getSimState();
         j2ControllerSimState = j2Controller.getSimState();  
@@ -98,9 +75,18 @@ public class DJArmSimulations {
 
         // Napıyorum
         // We set our simulated encoder's readings and simulated battery voltage
-        j1ControllerSimState.setRawRotorPosition(j1Sim.getAngularPositionRotations() / ArmConstants.GEARING_SH);
-        j2ControllerSimState.setRawRotorPosition(j2Sim.getAngularPositionRotations() / ArmConstants.GEARING_EL);
-    
+        j1ControllerSimState.setRawRotorPosition(Units.radiansToRotations(shoulderSim.getAngleRads()) * ArmConstants.GEARING_SH);
+        j2ControllerSimState.setRawRotorPosition(Units.radiansToRotations(elbowSim.getAngleRads()) * ArmConstants.GEARING_EL);
+        j1ControllerSimState.setRotorVelocity(
+            (Units.radiansPerSecondToRotationsPerMinute(shoulderSim.getVelocityRadPerSec()) / 60) 
+            * ArmConstants.GEARING_SH
+        );
+        j2ControllerSimState.setRotorVelocity(
+            (Units.radiansPerSecondToRotationsPerMinute(elbowSim.getVelocityRadPerSec()) / 60) 
+            * ArmConstants.GEARING_EL
+        );
+
+
         RoboRioSim.setVInVoltage(BatterySim.calculateDefaultBatteryLoadedVoltage(shoulderSim.getCurrentDrawAmps() + elbowSim.getCurrentDrawAmps()));
 
         // Update telemetry

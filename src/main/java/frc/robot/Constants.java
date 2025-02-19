@@ -5,17 +5,14 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.Kilograms;
-import static edu.wpi.first.units.Units.Meter;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Millimeter;
 import static edu.wpi.first.units.Units.Millimeters;
 
 import com.pathplanner.lib.config.PIDConstants;
-import com.pathplanner.lib.config.RobotConfig;
 
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.Unit;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Mass;
 import swervelib.math.Matter;
@@ -57,6 +54,7 @@ public final class Constants {
     public static final Distance MIN_HEIGHT = Meters.of(0.2);
     public static final Distance MAX_HEIGHT = Meters.of(1.7);
     public static final double DRIVING_DRUM_RADIUS = Meters.convertFrom(21, Millimeters);
+    public static final double CONVERSION = (DRIVING_DRUM_RADIUS * 2 * Math.PI / GEAR_REDUCTION);
     
     public static final Mass CARRIAGE_MASS = Kilograms.of(5);
 
