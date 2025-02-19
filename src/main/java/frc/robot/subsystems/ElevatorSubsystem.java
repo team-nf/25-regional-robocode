@@ -13,6 +13,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
@@ -97,6 +98,12 @@ public class ElevatorSubsystem extends SubsystemBase {
     return run(() -> m_motor.setControl(m_positionControl.withPosition(position/0.125 * 11.99)));
   }
 
+  public Command setPositionWithJoystik(double control) {
+    SlewRateLimiter limiter = new SlewRateLimiter(.1);
+    double pos = limiter.calculate(control);
+    return run(() -> m_motor.setControl(m_positionVoltageControl.withPosition(pos/0.125 * 11.99)));
+  }
+
   public Command setPositionSimulation(){
     return run(() -> {m_elevatorSim.setState(1.25, 1);});
   }
@@ -122,12 +129,13 @@ public class ElevatorSubsystem extends SubsystemBase {
     return runEnd(() -> m_motor.setControl(m_positionVoltageControl.withPosition(goal / ElevatorConstants.CONVERSION)), () -> stop());
   }
   public void stop() {
-    m_motor.set(0);
+    m_motor.stopMotor();
   }
 
   public Command reachGoal(double goal) {
     return run(() -> m_motor.setControl(m_positionVoltageControl.withPosition(goal / ElevatorConstants.CONVERSION)));
   }
+
 
   @Override
   public void periodic() {
