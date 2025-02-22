@@ -5,8 +5,11 @@
       "/SmartDashboard/Alerts": "Alerts",
       "/SmartDashboard/Encoders": "Alerts",
       "/SmartDashboard/Field": "Field2d",
+      "/SmartDashboard/Has Algea": "Digital Input",
+      "/SmartDashboard/Has Coral?: ": "Digital Input",
       "/SmartDashboard/IMU": "Alerts",
       "/SmartDashboard/JSON": "Alerts",
+      "/SmartDashboard/Mech Arm": "Mechanism2d",
       "/SmartDashboard/Mech2d": "Mechanism2d",
       "/SmartDashboard/Motors": "Alerts",
       "/SmartDashboard/Swerve Drive": "Alerts"
@@ -23,7 +26,7 @@
           "visible": true
         }
       },
-      "/SmartDashboard/Mech2d": {
+      "/SmartDashboard/Mech Arm": {
         "window": {
           "visible": true
         }
