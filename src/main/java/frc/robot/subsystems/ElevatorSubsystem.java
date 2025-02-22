@@ -5,12 +5,12 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.DutyCycleOut;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.PositionDutyCycle;
 import com.ctre.phoenix6.controls.PositionVoltage;
-import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
+import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
 import edu.wpi.first.math.filter.SlewRateLimiter;
@@ -29,12 +29,10 @@ public class ElevatorSubsystem extends SubsystemBase {
   // Falcon
   private final TalonFX m_motor = new TalonFX(ElevatorConstants.DEVICE_ID);
 
-
-  private final DutyCycleOut m_motorOut = new DutyCycleOut(0);
-  private final VoltageOut m_motorVoltage = new VoltageOut(0);
   // Position unit???
   private final PositionVoltage m_positionVoltageControl = new PositionVoltage(0);
   private final PositionDutyCycle m_positionControl = new PositionDutyCycle(0);
+  private final MotionMagicVoltage m_motionMagic = new MotionMagicVoltage(0);
 
   private final TalonFXConfiguration m_motorConfig = new TalonFXConfiguration();
 
@@ -56,16 +54,24 @@ public class ElevatorSubsystem extends SubsystemBase {
 
   /** Creates a new ElevatorSubsystem. */
   public ElevatorSubsystem(ArmVisualizer visualizer) {
-    var slot0motorConfigs = m_motorConfig.Slot0;
-    slot0motorConfigs.withGravityType(GravityTypeValue.Elevator_Static);
-    slot0motorConfigs.kV = ElevatorConstants.kV;
-    slot0motorConfigs.kS = ElevatorConstants.kS;
-    slot0motorConfigs.kP = ElevatorConstants.kP;
-    slot0motorConfigs.kI = ElevatorConstants.kI;
-    slot0motorConfigs.kD = ElevatorConstants.kD;
+    m_motorConfig.Slot0.withGravityType(GravityTypeValue.Elevator_Static)
+    .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign);
+    m_motorConfig.Slot0.kG = ElevatorConstants.kG;
+    m_motorConfig.Slot0.kV = ElevatorConstants.kV;
+    m_motorConfig.Slot0.kS = ElevatorConstants.kS;
+    m_motorConfig.Slot0.kP = ElevatorConstants.kP;
+    m_motorConfig.Slot0.kI = ElevatorConstants.kI;
+    m_motorConfig.Slot0.kD = ElevatorConstants.kD;
+
+    m_motorConfig.MotionMagic.MotionMagicAcceleration = ElevatorConstants.kMMA;
+    m_motorConfig.MotionMagic.MotionMagicCruiseVelocity = ElevatorConstants.kMMCV;
+    m_motorConfig.MotionMagic.MotionMagicJerk = ElevatorConstants.kMMJ;
+
+    m_motorConfig.Voltage.withPeakForwardVoltage(ElevatorConstants.kPFV).withPeakReverseVoltage(ElevatorConstants.kPRV);
+    m_motorConfig.CurrentLimits.withSupplyCurrentLimit(ElevatorConstants.kMAXSC).withSupplyCurrentLowerLimit(ElevatorConstants.kMINSC);
 
     // Apply configs
-    m_motor.getConfigurator().apply(slot0motorConfigs, 0.05);
+    m_motor.getConfigurator().apply(m_motorConfig, 0.05);
 
     m_visualizer = visualizer;
   }
@@ -93,15 +99,15 @@ public class ElevatorSubsystem extends SubsystemBase {
    * @param position
    * @return
    */
-  public Command setPosition(double position) {
+  public Command setPositionRaw(double position) {
     m_positionControl.Slot = 0;
-    return run(() -> m_motor.setControl(m_positionControl.withPosition(position/0.125 * 11.99)));
+    return run(() -> m_motor.setControl(m_positionControl.withPosition(position)));
   }
 
   public Command setPositionWithJoystik(double control) {
     SlewRateLimiter limiter = new SlewRateLimiter(.1);
-    double pos = limiter.calculate(control);
-    return run(() -> m_motor.setControl(m_positionVoltageControl.withPosition(pos/0.125 * 11.99)));
+    double pos = limiter.calculate(control * 10);
+    return run(() -> m_motor.setControl(m_positionVoltageControl.withPosition(pos/ElevatorConstants.CONVERSION)));
   }
 
   public Command setPositionSimulation(){
@@ -114,7 +120,7 @@ public class ElevatorSubsystem extends SubsystemBase {
    * @return
    */
   public Command reachGoalAndHold(double goal) {
-    return runEnd(() -> m_motor.setControl(m_positionVoltageControl.withPosition(goal / ElevatorConstants.CONVERSION)), () -> hold());
+    return runEnd(() -> m_motor.setControl(m_motionMagic.withPosition(goal / ElevatorConstants.CONVERSION)), () -> hold());
   }
   public void hold() {
     // Gerekli mi bilmiyorum.. şimdilik boş, feedforward değerini vermem gerekiyor olabilir set 0 sorun çıkarabilir gibi hissettim.
@@ -126,14 +132,14 @@ public class ElevatorSubsystem extends SubsystemBase {
    * @return
    */
   public Command reachGoalAndStop(double goal) {
-    return runEnd(() -> m_motor.setControl(m_positionVoltageControl.withPosition(goal / ElevatorConstants.CONVERSION)), () -> stop());
+    return runEnd(() -> m_motor.setControl(m_motionMagic.withPosition(goal / ElevatorConstants.CONVERSION)), () -> stop());
   }
   public void stop() {
     m_motor.stopMotor();
   }
 
   public Command reachGoal(double goal) {
-    return run(() -> m_motor.setControl(m_positionVoltageControl.withPosition(goal / ElevatorConstants.CONVERSION)));
+    return run(() -> m_motor.setControl(m_motionMagic.withPosition(goal / ElevatorConstants.CONVERSION)));
   }
 
 

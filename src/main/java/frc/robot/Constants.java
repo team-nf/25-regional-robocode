@@ -4,17 +4,21 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Kilograms;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Millimeter;
 import static edu.wpi.first.units.Units.Millimeters;
+import static edu.wpi.first.units.Units.Volts;
 
 import com.pathplanner.lib.config.PIDConstants;
 
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Mass;
+import edu.wpi.first.units.measure.Voltage;
 import swervelib.math.Matter;
 
 /**
@@ -51,18 +55,33 @@ public final class Constants {
 
     public static final Distance SPOOL_PERIMETER = Millimeter.of(40);
     public static final Distance ROPE_PERIMETER = Millimeter.of(3);
+    public static final double DRIVING_DRUM_RADIUS = Meters.convertFrom(21, Millimeters);
     public static final Distance MIN_HEIGHT = Meters.of(0.2);
     public static final Distance MAX_HEIGHT = Meters.of(1.7);
-    public static final double DRIVING_DRUM_RADIUS = Meters.convertFrom(21, Millimeters);
+
     public static final double CONVERSION = (DRIVING_DRUM_RADIUS * 2 * Math.PI / GEAR_REDUCTION);
     
     public static final Mass CARRIAGE_MASS = Kilograms.of(5);
 
-    public static final double kP = 0;
-    public static final double kI = 0;
-    public static final double kD = 0;
+    public static final double kP = 0.625;
+    public static final double kI = 0.04;
+    public static final double kD = 0.01;
+
+    /** UseClosedLoopSign */
+    public static final double kG = -0.07; 
     public static final double kS = 0;
     public static final double kV = 0;
+
+    public static final Voltage kPFV = Volts.of(10);
+    public static final Voltage kPRV = Volts.of(-10);
+    public static final Current kMINSC = Amps.of(20);
+    public static final Current kMAXSC = Amps.of(40);
+
+  
+    // Motion Magic Constants
+    public static final double kMMA = 160;
+    public static final double kMMCV = 200;
+    public static final double kMMJ = 0;
   }
   public static class ArmConstants {
     public static final int SHOULDER_DEVICE_ID = 12;

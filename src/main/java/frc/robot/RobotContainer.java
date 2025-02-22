@@ -105,8 +105,11 @@ public class RobotContainer {
     //m_gripper.controlWithTriggers(-m_driverController.getRightTriggerAxis()).onlyIf(() -> m_driverController.getRightTriggerAxis() > 0.2);
     if (RobotBase.isSimulation()) {
     m_driverController.a().onTrue(m_elevator.setPositionSimulation());
-    m_driverController.a().onFalse(m_elevator.setPosition(0.2));  
     }
+    m_driverController.a().onTrue(m_elevator.reachGoalAndHold(-0));
+    m_driverController.b().onTrue(m_elevator.reachGoalAndHold(-0.09));
+    m_driverController.y().onTrue(m_elevator.reachGoalAndHold(-0.49));
+    m_driverController.x().onTrue(m_elevator.reachGoalAndHold(-1.26));
   }
 
 
