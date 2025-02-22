@@ -5,24 +5,38 @@
 package frc.robot;
 
 import frc.robot.Constants.OperatorConstants;
-import frc.robot.commands.Autos;
-import frc.robot.subsystems.IntakeSubsystem;
-import frc.robot.subsystems.arm.ArmSubsystem;
-import frc.robot.subsystems.arm.ArmVisualizer;
-import frc.robot.subsystems.swervedrive.SwerveSubsystem;
+import frc.robot.sims.MainRobotMechanism;
+import frc.robot.commands.MainSystem.PutCoralStage1;
+import frc.robot.commands.MainSystem.PutCoralStage2;
+import frc.robot.commands.MainSystem.PutCoralStage3;
+import frc.robot.commands.MainSystem.PutCoralStage4;
+import frc.robot.commands.MainSystem.ShootAlgae;
+import frc.robot.commands.MainSystem.StayFixed;
+import frc.robot.commands.MainSystem.TakeAlgaeGround;
+import frc.robot.commands.MainSystem.TakeCoral;
+import frc.robot.subsystems.ArmSubsystem;
 import frc.robot.subsystems.ElevatorSubsystem;
-import frc.robot.subsystems.GripperSubsystem;
+import frc.robot.subsystems.swervedrive.SwerveSubsystem;
+import swervelib.SwerveInputStream;
 
 import java.io.File;
 
-import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.networktables.Topic;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
@@ -34,61 +48,64 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
  */
 public class RobotContainer {
   // The robot's subsystems and commands are defined here...
-  private final SwerveSubsystem m_drivebase = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(), "swerve/teamnf"));
+  private final ArmSubsystem m_armSubsystem = new ArmSubsystem();
+
+  private final ElevatorSubsystem m_elevatorSubsystem = new ElevatorSubsystem();
+  private final PutCoralStage1 m_putCoralStage1 = new PutCoralStage1(m_elevatorSubsystem, m_armSubsystem);
+  private final PutCoralStage2 m_putCoralStage2 = new PutCoralStage2(m_elevatorSubsystem, m_armSubsystem);
+  private final PutCoralStage3 m_putCoralStage3 = new PutCoralStage3(m_elevatorSubsystem, m_armSubsystem);
+  private final PutCoralStage4 m_putCoralStage4 = new PutCoralStage4(m_elevatorSubsystem, m_armSubsystem);
+  private final TakeCoral m_takeCoral  = new TakeCoral(m_elevatorSubsystem, m_armSubsystem);
+  private final ShootAlgae m_shootAlgae = new ShootAlgae(m_elevatorSubsystem, m_armSubsystem);
+  private final TakeAlgaeGround m_takeAlgaeGround = new TakeAlgaeGround(m_elevatorSubsystem, m_armSubsystem);
+  private final StayFixed m_stayFixed = new StayFixed(m_elevatorSubsystem, m_armSubsystem);
   
-  // Mechanism Visuals for Elevator - Arm - Gripper
-  private final ArmVisualizer armVisualizions = new ArmVisualizer("Double-Jointed Arm", null);
+  private final MainRobotMechanism m_robotMechanism = new MainRobotMechanism();
 
-  //private final IntakeSubsystem m_intake = new IntakeSubsystem();
-  private final ArmSubsystem m_arm = new ArmSubsystem(armVisualizions);
-  private final ElevatorSubsystem m_elevator = new ElevatorSubsystem(armVisualizions);
-  private final GripperSubsystem m_gripper = new GripperSubsystem();
-
-
-  // Replace with CommandPS4Controller or CommandJoystick if needed
+    // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController m_driverController =
-      new CommandXboxController(OperatorConstants.CONTROLLER_PORT);
+    new CommandXboxController(OperatorConstants.kDriverControllerPort);
+  private final CommandXboxController m_operatorController =
+    m_driverController;
+  //  new CommandXboxController(OperatorConstants.kOperatorControllerPort);
+
+  private final SwerveSubsystem m_drivebase  = new SwerveSubsystem();
+
+  SwerveInputStream driveAngularVelocity = SwerveInputStream.of(m_drivebase.getSwerveDrive(),
+                                                                () -> m_driverController.getLeftY() * 1,
+                                                                () -> m_driverController.getLeftX() * 1)
+                                                            .withControllerRotationAxis(m_driverController::getRightX)
+                                                            .deadband(OperatorConstants.DEADBAND)
+                                                            .scaleTranslation(0.8)
+                                                            .allianceRelativeControl(true);
+
+  /**
+   * Clone's the angular velocity input stream and converts it to a fieldRelative input stream.
+   */
+  SwerveInputStream driveDirectAngle = driveAngularVelocity.copy()
+                                                           .withControllerHeadingAxis(m_driverController::getRightX,
+                                                                                      m_driverController::getRightY)
+                                                           .headingWhile(true);
+
+  StructPublisher<Pose3d> elevatorStage0pub = NetworkTableInstance.getDefault()
+      .getStructTopic("3dSim/eleStage0", Pose3d.struct).publish();
+  StructPublisher<Pose3d> elevatorStage1pub = NetworkTableInstance.getDefault()
+      .getStructTopic("3dSim/eleStage1", Pose3d.struct).publish();
+  StructPublisher<Pose3d> armStage0pub = NetworkTableInstance.getDefault()
+      .getStructTopic("3dSim/armStage0", Pose3d.struct).publish();
+  StructPublisher<Pose3d> armStage1pub = NetworkTableInstance.getDefault()
+      .getStructTopic("3dSim/armStage1", Pose3d.struct).publish();
+
+  private double eleGeneralHeight = 0;
+  private double eleStage0Height = 0;
+  private double eleStage1Height = 0;
+  private double armJ1Angle = 0;
+  private double armJ2Angle = 0;
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
     // Configure the trigger bindings
     configureBindings();
-
-    double driveK = 0.6;
-    double angleK = 0.85;
-    Command driveRobotOrientedAngularVelocity = m_drivebase.robotCentricDriveCommand(
-        () -> (MathUtil.applyDeadband(m_driverController.getLeftY(), 0.2) * driveK),
-        () -> MathUtil.applyDeadband(m_driverController.getLeftX(), 0.2) * driveK,
-        () -> m_driverController.getRightX() * angleK);
-
-    Command driveFieldOrientedDirectAngle = m_drivebase.driveCommand(
-      () -> MathUtil.applyDeadband(m_driverController.getLeftY(), 0.2) * driveK,
-      () -> MathUtil.applyDeadband(m_driverController.getLeftX(), 0.2) * driveK,
-      () -> m_driverController.getRightX() * angleK,
-      () -> m_driverController.getRightY() * angleK);
-
-    if (RobotBase.isReal()) {
-      m_drivebase.setDefaultCommand(driveFieldOrientedDirectAngle);
-    } else {
-    m_drivebase.setDefaultCommand(m_drivebase.simDriveCommand( 
-      () -> (MathUtil.applyDeadband(m_driverController.getLeftY(), 0.2) * driveK),
-      () -> MathUtil.applyDeadband(m_driverController.getLeftX(), 0.2) * driveK,
-      () -> m_driverController.getRightX() * angleK));
-    }
-    // Simulation
-    if (RobotBase.isSimulation()) {
-      // Herhalde kullanmayız
-      Mechanism2d arm = new Mechanism2d(20, 20);
-      MechanismRoot2d armRoot = arm.getRoot("armroot", 10, 0);
-
-      var m_mechElevator = armRoot.append(new MechanismLigament2d("elevator", 8, 90));
-      var m_mechCage = armRoot.append(new MechanismLigament2d("cage", 1, 90));
-      var m_shoulder = m_mechCage.append(new MechanismLigament2d("shoulder", 5, -20));
-      var m_elbow = m_shoulder.append(new MechanismLigament2d("elbow", 4, 0));
-      var m_wrist = m_elbow.append(new MechanismLigament2d("wrist", 2, 15));
-
-      //SmartDashboard.putData("Mech2d", arm);
-    }
   }
 
   /**
@@ -101,14 +118,21 @@ public class RobotContainer {
    * joysticks}.
    */
   private void configureBindings() {
-    //m_gripper.controlWithTriggers(m_driverController.getLeftTriggerAxis()).onlyIf(() -> m_driverController.getLeftTriggerAxis() > 0.2);
-    //m_gripper.controlWithTriggers(-m_driverController.getRightTriggerAxis()).onlyIf(() -> m_driverController.getRightTriggerAxis() > 0.2);
-    if (RobotBase.isSimulation()) {
-    m_driverController.a().onTrue(m_elevator.setPositionSimulation());
-    m_driverController.a().onFalse(m_elevator.setPosition(0.2));  
-    }
-  }
+    
+    m_operatorController.a().onTrue(m_putCoralStage1);
+    m_operatorController.b().onTrue(m_putCoralStage2);
+    m_operatorController.x().onTrue(m_putCoralStage3);
+    m_operatorController.y().onTrue(m_putCoralStage4);
+    m_operatorController.button(5).onTrue(m_takeCoral);
+    m_operatorController.button(6).onTrue(m_shootAlgae);
+    m_operatorController.button(7).onTrue(m_takeAlgaeGround);
+    m_operatorController.button(10).onTrue(m_stayFixed);
 
+    Command driveFieldOrientedDirectAngle      = m_drivebase.driveFieldOriented(driveDirectAngle);
+    Command driveFieldOrientedAnglularVelocity = m_drivebase.driveFieldOriented(driveAngularVelocity);
+
+    m_drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity);
+  }
 
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
@@ -117,6 +141,27 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
-    return Autos.exampleAuto(m_drivebase);
+    return null;
   }
+
+  public void teleopSimUpdate() {
+
+    eleGeneralHeight = m_elevatorSubsystem.getEncoderDistance();
+    eleStage0Height = (eleGeneralHeight > Constants.Elevator.kStage1Height ?  eleGeneralHeight - Constants.Elevator.kStage1Height : 0);
+    eleStage1Height = eleGeneralHeight - eleStage0Height;
+    armJ1Angle = m_armSubsystem.getSimAngleJ1();
+    armJ2Angle = m_armSubsystem.getSimAngleJ2();
+
+    elevatorStage0pub.set(new Pose3d(0,0, eleStage0Height, new Rotation3d(0,0,0)));
+    elevatorStage1pub.set(new Pose3d(0,0, eleGeneralHeight, new Rotation3d(0,0,0)));
+    armStage0pub.set(new Pose3d(Constants.Arm.FirstJoint.kSimOffsets[0], Constants.Arm.FirstJoint.kSimOffsets[1], Constants.Arm.FirstJoint.kSimOffsets[2] + eleGeneralHeight, 
+        new Rotation3d(0,Units.degreesToRadians(armJ1Angle),0)));
+    armStage1pub.set(new Pose3d(Constants.Arm.SecondJoint.kSimOffsets[0] + Constants.Arm.FirstJoint.kArmLength * Math.sin(Units.degreesToRadians(armJ1Angle)),
+                                Constants.Arm.SecondJoint.kSimOffsets[1], 
+                                Constants.Arm.SecondJoint.kSimOffsets[2] + Constants.Arm.FirstJoint.kArmLength * Math.cos(Units.degreesToRadians(armJ1Angle)) + eleGeneralHeight, 
+        new Rotation3d(0,Units.degreesToRadians(armJ1Angle+ armJ2Angle-90),0)));
+    m_robotMechanism.update(eleGeneralHeight, armJ1Angle, armJ2Angle);
+
+  }
+
 }

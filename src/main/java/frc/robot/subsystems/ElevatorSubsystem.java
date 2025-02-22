@@ -4,135 +4,101 @@
 
 package frc.robot.subsystems;
 
-import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.DutyCycleOut;
-import com.ctre.phoenix6.controls.PositionDutyCycle;
+import com.ctre.phoenix6.controls.NeutralOut;
 import com.ctre.phoenix6.controls.PositionVoltage;
-import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N2;
-import edu.wpi.first.math.system.LinearSystem;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.system.plant.LinearSystemId;
-import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.motorcontrol.Talon;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
-import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
-import edu.wpi.first.wpilibj.simulation.EncoderSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants.ElevatorConstants;
-import frc.robot.subsystems.arm.ArmVisualizer;
+import frc.robot.Constants.Elevator;
+import static edu.wpi.first.units.Units.*;
 
 public class ElevatorSubsystem extends SubsystemBase {
-  // Falcon
-  private final TalonFX m_motor = new TalonFX(ElevatorConstants.DEVICE_ID);
-
-
-  private final DutyCycleOut m_motorOut = new DutyCycleOut(0);
-  private final VoltageOut m_motorVoltage = new VoltageOut(0);
-  // Position unit???
-  private final PositionVoltage m_positionVoltageControl = new PositionVoltage(0);
-  private final PositionDutyCycle m_positionControl = new PositionDutyCycle(0);
-
-  private final TalonFXConfiguration m_motorConfig = new TalonFXConfiguration();
-
-  private final DCMotor m_falcon = DCMotor.getFalcon500(1).withReduction(ElevatorConstants.GEAR_REDUCTION);
-  private final LinearSystem<N2, N1, N2> m_plant = LinearSystemId.createElevatorSystem(m_falcon,
-  ElevatorConstants.CARRIAGE_MASS.magnitude(), 
-  ElevatorConstants.DRIVING_DRUM_RADIUS, 1);
   
-  
-  // Simulation
-  private final DCMotorSim m_falconSim = new DCMotorSim(m_plant, m_falcon);
-  private final ElevatorSim m_elevatorSim = new ElevatorSim(
-    m_plant, 
-    m_falcon, 
-    ElevatorConstants.MIN_HEIGHT.magnitude(), ElevatorConstants.MIN_HEIGHT.magnitude(), 
-    true, 
-    ElevatorConstants.MIN_HEIGHT.magnitude() * 1.2);
-  private final TalonFXSimState m_motorSim = m_motor.getSimState();
+  private final DCMotor m_elevatorGearbox = DCMotor.getFalcon500(1);
+  private final TalonFX m_motor = new TalonFX(Elevator.kMotorPort);
 
-  private final ArmVisualizer m_visualizer;
+  private final TalonFXConfiguration m_talonConfig = new TalonFXConfiguration();
+  private final PositionVoltage m_positionControl = new PositionVoltage(0).withSlot(0);
+  private final NeutralOut m_brake = new NeutralOut();
 
-  /** Creates a new ElevatorSubsystem. */
-  public ElevatorSubsystem(ArmVisualizer visualizer) {
-    var slot0motorConfigs = m_motorConfig.Slot0;
-    slot0motorConfigs.withGravityType(GravityTypeValue.Elevator_Static);
-    slot0motorConfigs.kV = ElevatorConstants.kV;
-    slot0motorConfigs.kS = ElevatorConstants.kS;
-    slot0motorConfigs.kP = ElevatorConstants.kP;
-    slot0motorConfigs.kI = ElevatorConstants.kI;
-    slot0motorConfigs.kD = ElevatorConstants.kD;
+  // Simulation classes help us simulate what's going on, including gravity.
+  private final ElevatorSim m_elevatorSim =
+      new ElevatorSim(
+          m_elevatorGearbox,
+          Elevator.kElevatorGearing,
+          Elevator.kCarriageMass,
+          Elevator.kElevatorDrumRadius,
+          Elevator.kMinElevatorHeightMeters,
+          Elevator.kMaxElevatorHeightMeters,
+          true,
+          0,
+          0.0,
+          0.0);
+  private final TalonFXSimState m_talonSim = m_motor.getSimState();
+
+  /** Creates a new ElevatorSubsytem. */
+  public ElevatorSubsystem() {
+    m_talonConfig.Slot0.kP = Elevator.kElevatorKp; // An error of 1 rotation results in 2.4 V output
+    m_talonConfig.Slot0.kI = Elevator.kElevatorKi; // No output for integrated error
+    m_talonConfig.Slot0.kD = Elevator.kElevatorKd; // A velocity of 1 rps results in 0.1 V output
+    m_talonConfig.Slot0.withGravityType(GravityTypeValue.Elevator_Static).kG = Elevator.kElevatorkG;
+    m_talonConfig.Voltage.withPeakForwardVoltage(Volts.of(Elevator.kVoltageLimit))
+            .withPeakReverseVoltage(Volts.of(-Elevator.kVoltageLimit));
+    m_talonConfig.CurrentLimits.withSupplyCurrentLimit(Elevator.kAmpLimit);
 
     // Apply configs
-    m_motor.getConfigurator().apply(slot0motorConfigs, 0.05);
+        StatusCode status = StatusCode.StatusCodeNotInitialized;
+    for (int i = 0; i < 5; ++i) {
+      status = m_motor.getConfigurator().apply(m_talonConfig);
+      
+      if (status.isOK()) break;
+          
+    }
+    if (!status.isOK()) {
+      System.out.println("Could not apply configs, error code: " + status.toString());
+    }
+    m_motor.setPosition(0);
 
-    m_visualizer = visualizer;
-  }
-  
-  /**
-   * Incomplete.
-   * Learn details on position unit and conversion and return to writing.
-   * 
-   * @param position
-   * @return
-   */
-  public Command setPositionWithVoltComp(double position) {
-    m_positionVoltageControl.Slot = 0;
-    return run(() -> m_motor.setControl(m_positionVoltageControl.withPosition(position)));
-  }
-
-  /**
-   * Incomplete.
-   * Learn details on position unit and conversion and return to writing.
-   * 
-   * @param position
-   * @return
-   */
-  public Command setPosition(double position) {
-    m_positionControl.Slot = 0;
-    return run(() -> m_motor.setControl(m_positionControl.withPosition(position/0.125 * 11.99)));
-  }
-
-  public Command setPositionSimulation(){
-    return run(() -> {m_elevatorSim.setState(1.25, 1); });
-  }
+    }
 
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
   }
 
-  /** Advance the simulation. */
   @Override
   public void simulationPeriodic() {
-    m_motorSim.setSupplyVoltage(RobotController.getBatteryVoltage());
-    
-    // In this method, we update our simulation of what our elevator is doing
-    // First, we set our "inputs" (position)
-    m_elevatorSim.setInput(m_motorSim.getMotorVoltage());
-
-    // Next, we update it. The standard loop time is 20ms.
+    m_talonSim.setSupplyVoltage(RobotController.getBatteryVoltage());
+    m_elevatorSim.setInput(m_talonSim.getMotorVoltage());
     m_elevatorSim.update(0.020);
 
-    // Finally, we set our simulated encoder's readings and simulated battery voltage
-    m_motorSim.setRawRotorPosition(m_falconSim.getAngularPositionRotations() / ElevatorConstants.GEAR_REDUCTION); 
-
-    // SimBattery estimates loaded battery voltages
+    m_talonSim.setRawRotorPosition(m_elevatorSim.getPositionMeters() / (Elevator.kElevatorDrumRadius * 2 * Math.PI / Elevator.kElevatorGearing));
+    m_talonSim.setRotorVelocity(m_elevatorSim.getVelocityMetersPerSecond() / (Elevator.kElevatorDrumRadius * 2 * Math.PI / Elevator.kElevatorGearing));
     RoboRioSim.setVInVoltage(
         BatterySim.calculateDefaultBatteryLoadedVoltage(m_elevatorSim.getCurrentDrawAmps()));
-
-    SmartDashboard.putNumberArray("Elevator Simulator Output", m_elevatorSim.getOutput().getData());
-    m_visualizer.update(m_elevatorSim.getPositionMeters());
   }
+
+  public void reachGoal(double goal) {
+    m_motor.setControl(m_positionControl.withPosition(goal / (Elevator.kElevatorDrumRadius * 2 * Math.PI / Elevator.kElevatorGearing)));
+  }
+
+  /** Stop the control loop and motor output. */
+  public void stop() {
+    m_motor.setControl(m_brake);
+  }
+
+  public double getEncoderDistance() { //Linear Distance
+    return m_motor.getPosition().getValueAsDouble() * (Elevator.kElevatorDrumRadius * 2 * Math.PI / Elevator.kElevatorGearing);
+  }
+
 }
