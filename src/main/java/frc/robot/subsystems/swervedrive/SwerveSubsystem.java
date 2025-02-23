@@ -72,4 +72,10 @@ public class SwerveSubsystem extends SubsystemBase {
   {
     return swerveDrive;
   }
+
+  public Pose2d getPose()
+  {
+    return swerveDrive.getPose();
+  }
+
 }

@@ -16,7 +16,7 @@
             "name": "camera1",
             "fov": 45,
             "resolution": [640, 480],
-            "position": [0.1, -0.1, 0.200],
+            "position": [0, 0, 0.30],
             "rotations": [
                 { 
                     "axis":"x",

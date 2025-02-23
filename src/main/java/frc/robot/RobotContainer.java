@@ -28,12 +28,14 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.networktables.Topic;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -96,13 +98,26 @@ public class RobotContainer {
   StructPublisher<Pose3d> armStage1pub = NetworkTableInstance.getDefault()
       .getStructTopic("3dSim/armStage1", Pose3d.struct).publish();
 
+  StructPublisher<Pose3d> vMarker = NetworkTableInstance.getDefault()
+      .getStructTopic("Vision/marker0", Pose3d.struct).publish();
+
+  NetworkTableInstance defaultInst = NetworkTableInstance.getDefault();
+  NetworkTable vTable = defaultInst.getTable("Vision/Raw0");
+
   private double eleGeneralHeight = 0;
   private double eleStage0Height = 0;
   private double eleStage1Height = 0;
   private double armJ1Angle = 0;
   private double armJ2Angle = 0;
 
+  private double markerX = 0;
+  private double markerY = 0;
+  private double markerZ = 0;
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
+
+  private Pose2d robotPose = new Pose2d(new Translation2d(0,0), Rotation2d.fromDegrees(0));
+  private double roboAngle = 0;
+
   public RobotContainer() {
     // Configure the trigger bindings
     configureBindings();
@@ -151,6 +166,7 @@ public class RobotContainer {
     eleStage1Height = eleGeneralHeight - eleStage0Height;
     armJ1Angle = m_armSubsystem.getSimAngleJ1();
     armJ2Angle = m_armSubsystem.getSimAngleJ2();
+    robotPose = m_drivebase.getPose();
 
     elevatorStage0pub.set(new Pose3d(0,0, eleStage0Height, new Rotation3d(0,0,0)));
     elevatorStage1pub.set(new Pose3d(0,0, eleGeneralHeight, new Rotation3d(0,0,0)));
@@ -160,8 +176,24 @@ public class RobotContainer {
                                 Constants.Arm.SecondJoint.kSimOffsets[1], 
                                 Constants.Arm.SecondJoint.kSimOffsets[2] + Constants.Arm.FirstJoint.kArmLength * Math.cos(Units.degreesToRadians(armJ1Angle)) + eleGeneralHeight, 
         new Rotation3d(0,Units.degreesToRadians(armJ1Angle+ armJ2Angle-90),0)));
+      
     m_robotMechanism.update(eleGeneralHeight, armJ1Angle, armJ2Angle);
 
+    roboAngle = robotPose.getRotation().getRadians() - Math.PI/2;
+    
+    if (vTable.getEntry("marker_id").getDouble(-1) != -1)
+    {
+      markerX = vTable.getEntry("x").getDouble(0)*Math.cos(roboAngle)
+              - vTable.getEntry("y").getDouble(0)*Math.sin(roboAngle) 
+              + robotPose.getTranslation().getX();
+      markerY = vTable.getEntry("y").getDouble(0)*Math.cos(roboAngle) 
+              + vTable.getEntry("x").getDouble(0)*Math.sin(roboAngle) 
+              + robotPose.getTranslation().getY();
+      markerZ = vTable.getEntry("z").getDouble(0) + 0.6;
+
+      vMarker.set(new Pose3d(markerX,markerY,markerZ, new Rotation3d(0,0,0)));
+    }
+    else vMarker.set(new Pose3d(robotPose.getTranslation().getX(),robotPose.getTranslation().getY(),0.6, new Rotation3d(0,0,0)));
   }
 
 }
