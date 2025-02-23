@@ -145,4 +145,11 @@ public final class Constants {
     public static final double LOW_OUT = 0;
     public static final double HIGH_OUT = 0;
   }
+
+  public static boolean disableHAL = false;
+
+  public static void disableHAL() {
+    disableHAL = true;
+  }
+
 }
