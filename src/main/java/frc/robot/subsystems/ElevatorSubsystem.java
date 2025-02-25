@@ -12,14 +12,16 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.Elevator;
+import frc.robot.Constants.StatePositions;
+
 import static edu.wpi.first.units.Units.*;
 
 public class ElevatorSubsystem extends SubsystemBase {
@@ -45,6 +47,8 @@ public class ElevatorSubsystem extends SubsystemBase {
           0.0,
           0.0);
   private final TalonFXSimState m_talonSim = m_motor.getSimState();
+
+  private double elevatorHeight = 0;
 
   /** Creates a new ElevatorSubsytem. */
   public ElevatorSubsystem() {
@@ -74,6 +78,7 @@ public class ElevatorSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
+    elevatorHeight = getEncoderDistance();
   }
 
   @Override
@@ -99,6 +104,16 @@ public class ElevatorSubsystem extends SubsystemBase {
 
   public double getEncoderDistance() { //Linear Distance
     return m_motor.getPosition().getValueAsDouble() * (Elevator.kElevatorDrumRadius * 2 * Math.PI / Elevator.kElevatorGearing);
+  }
+
+  public Command reachGoalCommand(double h)
+  {
+    return run(() -> {
+      reachGoal(h);
+      System.out.println(Math.abs(getEncoderDistance() - h) > Elevator.kElevatorTolerance);
+    }).until(() -> { 
+      return Math.abs(elevatorHeight - h) < Elevator.kElevatorTolerance; 
+    });
   }
 
 }

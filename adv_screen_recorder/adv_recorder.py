@@ -138,13 +138,13 @@ with mss.mss() as sct:
                 print("pitch_y: {}".format(pitch_y))
                 print("yaw_z: {}".format(yaw_z))
                 print()
-                if(i==0):
+                if(i==0 and marker_id == 10):
                     vtable.putNumber("x", -transform_translation_x )
                     vtable.putNumber("z", -transform_translation_y)
-                    vtable.putNumber("y", -transform_translation_z )
-                    vtable.putNumber("roll", roll_x)
-                    vtable.putNumber("pitch", pitch_y)
-                    vtable.putNumber("yaw", yaw_z)
+                    vtable.putNumber("y", -transform_translation_z-0.1 )
+                    vtable.putNumber("roll", yaw_z)
+                    vtable.putNumber("pitch", roll_x)
+                    vtable.putNumber("yaw", pitch_y)
                     m_id = marker_id
                 # Draw the axes on the marker
                 cv2.drawFrameAxes(frame, mtx, dst, rvecs[i], tvecs[i], 0.1, 3)

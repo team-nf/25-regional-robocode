@@ -21,8 +21,11 @@ import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.PIDSubsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.Arm;
+import frc.robot.Constants.Elevator;
 import frc.robot.custom.ArmHalfEncoder;
 import frc.robot.custom.ArmHalfEncoderSim;
 
@@ -74,6 +77,9 @@ public class ArmSubsystem extends SubsystemBase {
 
   private final TalonFXSimState m_armFirstJointMotorSim;
   private final TalonFXSimState m_armSecondJointMotorSim;
+
+  private double firstJointAngle = 0;
+  private double secondJointAngle = 0;
 
   public ArmSubsystem() {
         TalonFXConfiguration firstJointConfigs = new TalonFXConfiguration();
@@ -134,8 +140,8 @@ public class ArmSubsystem extends SubsystemBase {
     // This method will be called once per scheduler run
     m_firstJointHalfcoder.periodic();
     m_secondJointHalfcoder.periodic();
-    SmartDashboard.putNumber("Encoder Angle J1", m_firstJointHalfcoder.getAngle());
-    SmartDashboard.putNumber("Encoder Angle J2", m_secondJointHalfcoder.getAngle());
+
+    
   }
 
   @Override
@@ -158,13 +164,26 @@ public class ArmSubsystem extends SubsystemBase {
   
     SmartDashboard.putNumber("Arm Angle J1", Units.radiansToDegrees(m_armSimJ1.getAngleRads()));
     SmartDashboard.putNumber("Arm Angle J2", Units.radiansToDegrees(m_armSimJ2.getAngleRads()));
+
+    firstJointAngle  = Units.radiansToDegrees(m_armSimJ1.getAngleRads());
+    secondJointAngle = Units.radiansToDegrees(m_armSimJ2.getAngleRads());
   }
 
-  public void reachGoal(double goalj1, double goalj2)
+  public void reachGoal(double goalJ1, double goalJ2)
   {
-    m_armFirstJointMotor.setControl(m_firstJointPositionVoltage.withPosition(Units.degreesToRotations(goalj1)
+    reachGoalJ1(goalJ1);
+    reachGoalJ2(goalJ2);
+  }
+
+  public void reachGoalJ1(double goalJ1)
+  {
+    m_armFirstJointMotor.setControl(m_firstJointPositionVoltage.withPosition(Units.degreesToRotations(goalJ1)
      *Arm.FirstJoint.kArmReduction));
-    m_armSecondJointMotor.setControl(m_secondJointPositionVoltage.withPosition(Units.degreesToRotations(goalj2)
+  }
+
+  public void reachGoalJ2(double goalJ2)
+  {
+    m_armSecondJointMotor.setControl(m_secondJointPositionVoltage.withPosition(Units.degreesToRotations(goalJ2)
     *Arm.SecondJoint.kArmReduction));
   }
 
@@ -182,6 +201,29 @@ public class ArmSubsystem extends SubsystemBase {
 
   public double getSimAngleJ2(){
     return Units.radiansToDegrees(m_armSimJ2.getAngleRads());
+  }
+
+  public Command reachGoalJ1Command(double angleJ1)
+  {
+    return run(() -> {
+      reachGoalJ1(angleJ1);
+    });
+  }
+
+  public Command reachGoalJ2Command(double angleJ2)
+  {
+    return run(() -> {
+      reachGoalJ2(angleJ2);
+    });
+  }
+
+  public Command reachGoalCommand(double angleJ1, double angleJ2)
+  {
+    return run(() -> {
+      reachGoal(angleJ1, angleJ2);
+    }).until(() -> { 
+      return Math.abs(firstJointAngle - angleJ1) < Arm.FirstJoint.kAngleTolerance && Math.abs(secondJointAngle - angleJ2) < Arm.SecondJoint.kAngleTolerance; 
+    });
   }
 
 }

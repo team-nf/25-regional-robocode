@@ -68,6 +68,8 @@ public final class Constants {
       public static final double kMaxAngleRads = Units.degreesToRadians(180);
 
       public static final double[] kSimOffsets = {0.091,0.056,0.275};
+
+      public static double kAngleTolerance = 0.5;
     }
 
     public class SecondJoint {
@@ -103,6 +105,8 @@ public final class Constants {
       public static final double kMaxAngleRads = Units.degreesToRadians(180);
 
       public static final double[] kSimOffsets = {0.091,0.007,0.275};
+      
+      public static double kAngleTolerance = 0.5;
     }
 
   }
@@ -135,21 +139,22 @@ public final class Constants {
     // Encoder is reset to measure 0 at the bottom, so minimum height is 0.
     public static final double kMinElevatorHeightMeters = 0.0;
     public static final double kMaxElevatorHeightMeters = 1.5;
+    public static double kElevatorTolerance = 0.06;
   }
 
   public class StatePositions
   {
     // Length, Angle 1, Angle 2
-    public static final double[] kRobotState1 = {0, 30, 10};      //Coral Intake
-    public static final double[] kRobotState2 = {0.09, -20, -12};   //Coral Stage 1
-    public static final double[] kRobotState3 = {0.49, 0, -28};    //Coral Stage 2
-    public static final double[] kRobotState4 = {1.26, -5, -53};    //Coral Stage 3
-    public static final double[] kRobotState5 = {0.0, 0, 90};    //Coral Stage 4
-    public static final double[] kRobotState6 = {1.5, 7, -10};    //Algae Shoot
-    public static final double[] kRobotState7 = {0.0, -0, 0};     //Algae Stage 2-3
-    public static final double[] kRobotState8 = {0.0, -0, 0};     //Algae Stage 3-4
-    public static final double[] kRobotState9 = {0.05, 90, 0};  //Algae Ground
-    public static final double[] kRobotState10 = {0.0, -10, -160};  //Closed
+    public static final double[] kCoralStage1 = {0, 30, 10};      //Coral Intake
+    public static final double[] kCoralStage2 = {0.09, 20, 12};   //Coral Stage 1
+    public static final double[] kCoralStage3 = {0.49, 0, 28};    //Coral Stage 2
+    public static final double[] kCoralStage4 = {1.3, 5, 35};    //Coral Stage 3
+    public static final double[] kCoralIntake = {0.0, 0, -90};    //Coral Stage 4
+    public static final double[] kAlgaeThrow = {1.5, -7, -10};    //Algae Shoot
+    public static final double[] kAlgaeStage23 = {0.0, -0, 0};     //Algae Stage 2-3
+    public static final double[] kAlgaeStage34 = {0.0, -0, 0};     //Algae Stage 3-4
+    public static final double[] kAlgaeGround = {0.05, -90, 0};  //Algae Ground
+    public static final double[] kClosed = {0.0, -10, -160};  //Closed
 
   }
 
