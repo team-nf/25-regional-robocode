@@ -35,6 +35,8 @@ public final class Constants {
   public static final Matter CHASSIS    = new Matter(new Translation3d(0, 0, Units.inchesToMeters(8)), ROBOT_MASS);
   public static final double LOOP_TIME  = 0.13; //s, 20ms + 110ms sprk max velocity lag
 
+  public static final boolean tuningMode = false;
+
   public static class OperatorConstants {
     public static final int CONTROLLER_PORT = 0;
 
@@ -79,8 +81,8 @@ public final class Constants {
 
   
     // Motion Magic Constants
-    public static final double kMMA = 160;
     public static final double kMMCV = 200;
+    public static final double kMMA = 160;
     public static final double kMMJ = 0;
   }
   public static class ArmConstants {
@@ -96,13 +98,19 @@ public final class Constants {
     public static final double ELBOW_ENCODER_INIT = 0;
 
     // Shoulder
-    public static final double kPS = 10;
-    public static final double kIS = 0;
-    public static final double kDS = 0;
+    public static final double kPS = 0.2;
+    public static final double kIS = 0.01;
+    public static final double kDS = 0.01;
     public static final double kSS = 0;
     public static final double kVS = 0;
+    public static final double kGS = 0;
 
-    public static final double GEARING_SH = 173;
+    // Motion Magic Constants
+    public static final double kMMCVS = 200;
+    public static final double kMMAS = 200;
+    public static final double kMMJS = 0;
+
+    public static final double GEARING_SH = 170;
     public static final double SHOULDER_MASS = 6.5;
     public static final double SHOULDER_LENGTH = 0.345;
     public static final double SH_MIN_ANGLE_RADS = Units.degreesToRadians(-180);
@@ -112,13 +120,21 @@ public final class Constants {
 
 
     // Elbow
-    public static final double kPE = 10;
+    public static final double kPE = 0.2;
     public static final double kIE = 0;
-    public static final double kDE = 0;
+    public static final double kDE = 0.02;
     public static final double kSE = 0;
     public static final double kVE = 0;
+    public static final double kGE = 0;
+    
+    public static final double kGAE = 0; // Gravity co-eff & Algae
 
-    public static final double GEARING_EL = 97;
+    // Motion Magic Constants
+    public static final double kMMCVE = 200;
+    public static final double kMMAE = 140;
+    public static final double kMMJE = 0;
+
+    public static final double GEARING_EL = 100;
     public static final double ELBOW_MASS = 4.0;
     public static final double ELBOW_LENGTH = 0.345;
     public static final double EL_MIN_ANGLE_RADS = Units.degreesToRadians(-180);
@@ -138,6 +154,11 @@ public final class Constants {
     public static final double kV = 0.12;
     public static final double kS = 0.1;
     public static final double kPFV = 8.0;
+
+    // Motion Magic Constants
+    public static final double kMMCV = 200;
+    public static final double kMMA = 160;
+    public static final double kMMJ = 0;
 
     public static final double MAX_ACC = 0;
     public static final double MAX_VEL = 0;
