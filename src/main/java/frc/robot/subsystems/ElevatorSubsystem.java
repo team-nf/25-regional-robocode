@@ -6,10 +6,12 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.NeutralOut;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
+import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
 import edu.wpi.first.math.system.plant.DCMotor;
@@ -31,6 +33,7 @@ public class ElevatorSubsystem extends SubsystemBase {
 
   private final TalonFXConfiguration m_talonConfig = new TalonFXConfiguration();
   private final PositionVoltage m_positionControl = new PositionVoltage(0).withSlot(0);
+  private final MotionMagicVoltage m_motionMagic = new MotionMagicVoltage(0);
   private final NeutralOut m_brake = new NeutralOut();
 
   // Simulation classes help us simulate what's going on, including gravity.
@@ -55,10 +58,16 @@ public class ElevatorSubsystem extends SubsystemBase {
     m_talonConfig.Slot0.kP = Elevator.kElevatorKp; // An error of 1 rotation results in 2.4 V output
     m_talonConfig.Slot0.kI = Elevator.kElevatorKi; // No output for integrated error
     m_talonConfig.Slot0.kD = Elevator.kElevatorKd; // A velocity of 1 rps results in 0.1 V output
-    m_talonConfig.Slot0.withGravityType(GravityTypeValue.Elevator_Static).kG = Elevator.kElevatorkG;
+    m_talonConfig.Slot0.withGravityType(GravityTypeValue.Elevator_Static)
+    .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
+    .kG = Elevator.kElevatorkG;
     m_talonConfig.Voltage.withPeakForwardVoltage(Volts.of(Elevator.kVoltageLimit))
-            .withPeakReverseVoltage(Volts.of(-Elevator.kVoltageLimit));
+    .withPeakReverseVoltage(Volts.of(-Elevator.kVoltageLimit));
     m_talonConfig.CurrentLimits.withSupplyCurrentLimit(Elevator.kAmpLimit);
+
+    m_talonConfig.MotionMagic.MotionMagicCruiseVelocity = Elevator.kElevatorMMCV;
+    m_talonConfig.MotionMagic.MotionMagicAcceleration = Elevator.kElevatorMMA;
+    m_talonConfig.MotionMagic.MotionMagicJerk = Elevator.kElevatorMMJ;
 
     // Apply configs
         StatusCode status = StatusCode.StatusCodeNotInitialized;
@@ -93,8 +102,15 @@ public class ElevatorSubsystem extends SubsystemBase {
         BatterySim.calculateDefaultBatteryLoadedVoltage(m_elevatorSim.getCurrentDrawAmps()));
   }
 
-  public void reachGoal(double goal) {
+  public void reachGoal(double goal, boolean useMotionMagic) {
+    if (!useMotionMagic) {
     m_motor.setControl(m_positionControl.withPosition(goal / (Elevator.kElevatorDrumRadius * 2 * Math.PI / Elevator.kElevatorGearing)));
+    } else {reachGoal(goal);}
+  }
+
+  public void reachGoal(double goal) {
+    m_motor.setControl(m_motionMagic.withPosition(goal / (Elevator.kElevatorDrumRadius * 2 * Math.PI / Elevator.kElevatorGearing)));
+
   }
 
   /** Stop the control loop and motor output. */

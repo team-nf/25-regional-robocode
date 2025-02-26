@@ -8,6 +8,7 @@ import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.NeutralOut;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -35,6 +36,8 @@ public class ArmSubsystem extends SubsystemBase {
   private final TalonFX m_armSecondJointMotor = new TalonFX(Arm.SecondJoint.kMotorPort);
   private final PositionVoltage m_firstJointPositionVoltage = new PositionVoltage(0).withSlot(0);
   private final PositionVoltage m_secondJointPositionVoltage = new PositionVoltage(0).withSlot(0);
+  private final MotionMagicVoltage m_firstJointMotionMagic = new MotionMagicVoltage(0).withSlot(0);
+  private final MotionMagicVoltage m_secondJointMotionMagic = new MotionMagicVoltage(0).withSlot(0);
   private final NeutralOut m_firstJointBrake = new NeutralOut();
   private final NeutralOut m_secondJointBrake = new NeutralOut();
 
@@ -95,6 +98,9 @@ public class ArmSubsystem extends SubsystemBase {
             .withPeakReverseVoltage(Volts.of(-Arm.FirstJoint.kArmJoint1_kPFV));
         firstJointConfigs.CurrentLimits.withSupplyCurrentLimit(Amps.of(Arm.FirstJoint.kArmJoint1_kSCL))
             .withSupplyCurrentLowerLimit(Amps.of(Arm.FirstJoint.kArmJoint1_kSCLL));
+        firstJointConfigs.MotionMagic.MotionMagicCruiseVelocity = Arm.FirstJoint.kArmJoint1_MMCV;
+        firstJointConfigs.MotionMagic.MotionMagicAcceleration = Arm.FirstJoint.kArmJoint1_MMA;
+        firstJointConfigs.MotionMagic.MotionMagicJerk = Arm.FirstJoint.kArmJoint1_MMJ;
 
         TalonFXConfiguration secondJointConfigs = new TalonFXConfiguration();
         secondJointConfigs.Slot0.kS = Arm.SecondJoint.kArmJoint2_kS;
@@ -109,6 +115,9 @@ public class ArmSubsystem extends SubsystemBase {
             .withPeakReverseVoltage(Volts.of(-Arm.SecondJoint.kArmJoint2_kPFV));
         secondJointConfigs.CurrentLimits.withSupplyCurrentLimit(Amps.of(Arm.SecondJoint.kArmJoint2_kSCL))
             .withSupplyCurrentLowerLimit(Amps.of(Arm.SecondJoint.kArmJoint2_kSCLL));
+        secondJointConfigs.MotionMagic.MotionMagicCruiseVelocity = Arm.SecondJoint.kArmJoint2_MMCV;
+        secondJointConfigs.MotionMagic.MotionMagicAcceleration = Arm.SecondJoint.kArmJoint2_MMA;
+        secondJointConfigs.MotionMagic.MotionMagicJerk = Arm.SecondJoint.kArmJoint2_MMJ;
 
         StatusCode statusFirstJoint = StatusCode.StatusCodeNotInitialized;
         for (int i = 0; i < 5; ++i) {
@@ -175,15 +184,27 @@ public class ArmSubsystem extends SubsystemBase {
     reachGoalJ2(goalJ2);
   }
 
+  public void reachGoalJ1(double goalJ1, boolean useMotionMagic)
+  { if (!useMotionMagic) {
+    m_armFirstJointMotor.setControl(m_firstJointPositionVoltage.withPosition(Units.degreesToRotations(goalJ1)
+     *Arm.FirstJoint.kArmReduction)); } else {reachGoalJ1(goalJ1);}
+  }
+
+  public void reachGoalJ2(double goalJ2, boolean useMotionMagic)
+  { if (!useMotionMagic) {
+    m_armSecondJointMotor.setControl(m_secondJointPositionVoltage.withPosition(Units.degreesToRotations(goalJ2)
+    *Arm.SecondJoint.kArmReduction)); } else {reachGoalJ2(goalJ2);}
+  }
+
   public void reachGoalJ1(double goalJ1)
   {
-    m_armFirstJointMotor.setControl(m_firstJointPositionVoltage.withPosition(Units.degreesToRotations(goalJ1)
+    m_armFirstJointMotor.setControl(m_firstJointMotionMagic.withPosition(Units.degreesToRotations(goalJ1)
      *Arm.FirstJoint.kArmReduction));
   }
 
   public void reachGoalJ2(double goalJ2)
   {
-    m_armSecondJointMotor.setControl(m_secondJointPositionVoltage.withPosition(Units.degreesToRotations(goalJ2)
+    m_armSecondJointMotor.setControl(m_secondJointMotionMagic.withPosition(Units.degreesToRotations(goalJ2)
     *Arm.SecondJoint.kArmReduction));
   }
 
