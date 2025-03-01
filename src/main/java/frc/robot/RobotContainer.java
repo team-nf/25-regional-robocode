@@ -10,10 +10,21 @@ import frc.robot.subsystems.ArmSubsystem;
 import frc.robot.subsystems.ElevatorSubsystem;
 import frc.robot.subsystems.MainMechSubsystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
+import frc.robot.util.LoadPath;
 import swervelib.SwerveInputStream;
 
-import com.pathplanner.lib.auto.NamedCommands;
+import java.nio.file.Path;
+import java.lang.Exception;
 
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.auto.NamedCommands;
+import com.pathplanner.lib.commands.PathfindThenFollowPath;
+import com.pathplanner.lib.path.PathConstraints;
+import com.pathplanner.lib.path.PathPlannerPath;
+
+import edu.wpi.first.apriltag.AprilTag;
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -45,6 +56,7 @@ public class RobotContainer {
     new CommandXboxController(OperatorConstants.kDriverControllerPort);
   private final CommandXboxController m_operatorController =
     m_driverController;
+  private final CommandXboxController m_simController = new CommandXboxController(1);
   //  new CommandXboxController(OperatorConstants.kOperatorControllerPort);
 
   private final SwerveSubsystem m_drivebase  = new SwerveSubsystem();
@@ -81,6 +93,8 @@ public class RobotContainer {
   private double armJ2Angle = 0;
 
   public RobotContainer() {
+    LoadPath.init();
+
     // Configure the trigger bindings
     NamedCommands.registerCommand("CoralIntake", m_mainMechSubsystem.CoralIntakeCommand());
     NamedCommands.registerCommand("CoralStage1", m_mainMechSubsystem.CoralStage1Command());
@@ -114,8 +128,70 @@ public class RobotContainer {
     m_operatorController.button(10).onTrue(NamedCommands.getCommand("Closed"));
 
     Command driveFieldOrientedAnglularVelocity = m_drivebase.driveFieldOriented(driveAngularVelocity);
-
+    
     m_drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity);
+
+ 
+    // Human playerdan coral alma
+    m_simController.a().onTrue(
+      AutoBuilder.pathfindThenFollowPath(
+        // pathleri önceden bir yere çıkarıp saklamak daha mantıklı olacak sanırım?
+        LoadPath.human_player_pickup, 
+       m_drivebase.getConstraints())); // sürekli constraint oluşturuyor sanırım böyle bir yerde değişkene atmak mı mantıklı yoksa hepsinin constraint farklı mı olmalı?
+       // Kendini düzeltmezse visionle pose verip autobuilderdan posea path
+       //AutoBuilder.pathfindToPose(null, m_drivebase.getConstraints());
+       // Kendini ortalaması için ortalama pathi de yazılabilir?
+
+    // Çalışmayabilir bilmiyorum ki bir sürü command chainledim mantığı doğru mu yaptım emin değilim
+    m_simController.pov(270).onTrue(
+      AutoBuilder.pathfindToPose(
+        AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape).getTagPose(18).get().toPose2d(), 
+        m_drivebase.getConstraints())
+        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralA, m_drivebase.getConstraints())
+        .onlyWhile(m_simController.leftBumper()::getAsBoolean))
+        .raceWith(AutoBuilder.pathfindThenFollowPath(LoadPath.coralB, m_drivebase.getConstraints())
+        .onlyWhile(m_simController.rightBumper()::getAsBoolean)));
+    m_simController.pov(225).onTrue(
+      AutoBuilder.pathfindToPose(
+        AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape).getTagPose(17).get().toPose2d(), 
+        m_drivebase.getConstraints())
+        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralC, m_drivebase.getConstraints())
+        .onlyWhile(m_simController.leftBumper()::getAsBoolean))
+        .raceWith(AutoBuilder.pathfindThenFollowPath(LoadPath.coralD, m_drivebase.getConstraints())
+        .onlyWhile(m_simController.rightBumper()::getAsBoolean)));
+    m_simController.pov(135).onTrue(
+      AutoBuilder.pathfindToPose(
+        AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape).getTagPose(22).get().toPose2d(), 
+        m_drivebase.getConstraints())
+        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralE, m_drivebase.getConstraints())
+        .onlyWhile(m_simController.leftBumper()::getAsBoolean))
+        .raceWith(AutoBuilder.pathfindThenFollowPath(LoadPath.coralF, m_drivebase.getConstraints())
+        .onlyWhile(m_simController.rightBumper()::getAsBoolean)));
+    m_simController.pov(90).onTrue(
+      AutoBuilder.pathfindToPose(
+        AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape).getTagPose(21).get().toPose2d(), 
+        m_drivebase.getConstraints())
+        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralG, m_drivebase.getConstraints())
+        .onlyWhile(m_simController.leftBumper()::getAsBoolean))
+        .raceWith(AutoBuilder.pathfindThenFollowPath(LoadPath.coralH, m_drivebase.getConstraints())
+        .onlyWhile(m_simController.rightBumper()::getAsBoolean)));
+    m_simController.pov(45).onTrue(
+      AutoBuilder.pathfindToPose(
+        AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape).getTagPose(20).get().toPose2d(), 
+        m_drivebase.getConstraints())
+        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralI, m_drivebase.getConstraints())
+        .onlyWhile(m_simController.leftBumper()::getAsBoolean))
+        .raceWith(AutoBuilder.pathfindThenFollowPath(LoadPath.coralJ, m_drivebase.getConstraints())
+        .onlyWhile(m_simController.rightBumper()::getAsBoolean)));
+    m_simController.pov(315).onTrue(
+      AutoBuilder.pathfindToPose(
+        AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape).getTagPose(19).get().toPose2d(), 
+        m_drivebase.getConstraints())
+        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralK, m_drivebase.getConstraints())
+        .onlyWhile(m_simController.leftBumper()::getAsBoolean))
+        .raceWith(AutoBuilder.pathfindThenFollowPath(LoadPath.coralL, m_drivebase.getConstraints())
+        .onlyWhile(m_simController.rightBumper()::getAsBoolean)));
+
   }
 
   /**

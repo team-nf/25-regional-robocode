@@ -13,11 +13,13 @@ import com.pathplanner.lib.commands.PathfindingCommand;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.path.PathConstraints;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -58,6 +60,12 @@ public class SwerveSubsystem extends SubsystemBase {
     setupPathPlanner();
   }
 
+  public PathConstraints getConstraints() {
+    return new PathConstraints(
+        swerveDrive.getMaximumChassisVelocity(), 4.0,
+        swerveDrive.getMaximumChassisAngularVelocity(), Units.degreesToRadians(720));
+  }
+
   @Override
   public void periodic() {
     publisher.set(swerveDrive.getPose());
@@ -78,6 +86,26 @@ public class SwerveSubsystem extends SubsystemBase {
     return run(() -> {
       swerveDrive.driveFieldOriented(velocity.get());
     });
+  }
+
+  /**
+   * Gets the current field-relative velocity (x, y and omega) of the robot
+   *
+   * @return A ChassisSpeeds object of the current field-relative velocity
+   */
+  public ChassisSpeeds getFieldVelocity()
+  {
+    return swerveDrive.getFieldVelocity();
+  }
+
+  /**
+   * Gets the current velocity (x, y and omega) of the robot
+   *
+   * @return A {@link ChassisSpeeds} object of the current velocity
+   */
+  public ChassisSpeeds getRobotVelocity()
+  {
+    return swerveDrive.getRobotVelocity();
   }
 
   public SwerveDrive getSwerveDrive()
