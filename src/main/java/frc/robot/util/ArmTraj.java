@@ -12,12 +12,19 @@ public class ArmTraj {
     private final double[] phi;
     private final double[] h;
 
+    public int length;
+
     // Constructor
     public ArmTraj(String name, double[] theta, double[] phi, double[] h) {
         this.name = name;
         this.theta = theta;
         this.phi = phi;
         this.h = h;
+
+        // gereksiz
+        if (this.theta.length == this.phi.length && this.phi.length == this.h.length) {
+        this.length = this.theta.length;
+        } else {this.length = 99;}
     }
 
     // Getters (no setters since x and y are immutable)

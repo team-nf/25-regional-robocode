@@ -48,6 +48,9 @@ public class FollowTrajectory extends Command {
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
+    if (this.index == this.trajectory.length) {
+      return true;
+    }
     return false;
   }
 }
