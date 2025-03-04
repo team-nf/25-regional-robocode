@@ -18,6 +18,7 @@ import java.io.File;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
@@ -69,13 +70,15 @@ public class RobotContainer {
 
     if (RobotBase.isReal()) {
       m_drivebase.setDefaultCommand(driveFieldOrientedDirectAngle);
-    } else {
-    m_drivebase.setDefaultCommand(m_drivebase.simDriveCommand( 
-      () -> (MathUtil.applyDeadband(m_driverController.getLeftY(), 0.2) * driveK),
-      () -> MathUtil.applyDeadband(m_driverController.getLeftX(), 0.2) * driveK,
-      () -> m_driverController.getRightX() * angleK));
-    }
-    // Simulation
+    } else if (RobotBase.isSimulation()) {
+      m_drivebase.setDefaultCommand(m_drivebase.simDriveCommand( 
+        () -> (MathUtil.applyDeadband(m_driverController.getLeftY(), 0.2) * driveK),
+        () -> MathUtil.applyDeadband(m_driverController.getLeftX(), 0.2) * driveK,
+        () -> m_driverController.getRightX() * angleK));
+    } else if (RobotState.isTest()) {
+      m_drivebase.setDefaultCommand(driveFieldOrientedDirectAngle);
+    } 
+      // Simulation
     if (RobotBase.isSimulation()) {
       // Herhalde kullanmayız
       Mechanism2d arm = new Mechanism2d(20, 20);
