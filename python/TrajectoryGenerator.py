@@ -9,9 +9,10 @@ import json
 t = np.linspace(0, 1, 100)
 
 # Kullanıcının belirlediği x ve y hedef noktaları
-x_points = [1, 2, 3, 4]
-y_points = [5, 6, 8, 16]
-phi_points = [0.698, 0.9, 1.2, 1.57]
+x_points = [0.05, 0.2, 0.3, 0.2] # meters
+y_points = [0.5, 0.6, 0.8, 1.6] # meters
+
+phi_points = [0.698, 0.9, 1.2, 1.57] # radians
 
 # Zaman noktaları
 t_points = np.linspace(0, 1, len(x_points))
@@ -25,7 +26,8 @@ x_vals = poly_x(t)
 y_vals = poly_y(t)
 
 # Robot kol parametreleri
-L = 5  # Kol uzunluğu
+L = 0.375  # Kol uzunluğu
+H = 1.85
 
 # Açılar ve yükseklik hesaplama
 theta_vals = np.arccos(x_vals/L)
@@ -36,8 +38,8 @@ phi_vals = poly_phi(t)
 
 # Animasyon çizimi
 fig, ax = plt.subplots()
-ax.set_xlim(0, 16)
-ax.set_ylim(0, 16)
+ax.set_xlim(0, 2.5)
+ax.set_ylim(0, 2.5)
 line, = ax.plot([], [], 'ro-', lw=3)
 path, = ax.plot([], [], 'b--', lw=1)  # This will plot the path
 path_x, path_y = [], []  # Store the path coordinates
