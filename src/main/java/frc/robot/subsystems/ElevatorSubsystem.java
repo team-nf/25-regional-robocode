@@ -6,6 +6,7 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.NeutralOut;
 import com.ctre.phoenix6.controls.PositionVoltage;
@@ -15,6 +16,7 @@ import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
@@ -34,6 +36,9 @@ public class ElevatorSubsystem extends SubsystemBase {
   private final TalonFXConfiguration m_talonConfig = new TalonFXConfiguration();
   private final PositionVoltage m_positionControl = new PositionVoltage(0).withSlot(0);
   private final MotionMagicVoltage m_motionMagic = new MotionMagicVoltage(0);
+  private final MotionMagicExpoVoltage m_expo = new MotionMagicExpoVoltage(0);
+  // one shot expo olmak zorunda değildir ancak zaten mantıklı bir kontrol yöntemi mi emin değilim
+  private final MotionMagicExpoVoltage m_oneShotControlRequest = new MotionMagicExpoVoltage(0).withUpdateFreqHz(0);
   private final NeutralOut m_brake = new NeutralOut();
 
   // Simulation classes help us simulate what's going on, including gravity.
@@ -130,6 +135,14 @@ public class ElevatorSubsystem extends SubsystemBase {
     }).until(() -> { 
       return Math.abs(elevatorHeight - h) < Elevator.kElevatorTolerance; 
     });
+  }
+
+  public void reachGoalExpo(double h) {
+    m_motor.setControl(m_expo.withPosition(h / (Elevator.kElevatorDrumRadius * 2 * Math.PI / Elevator.kElevatorGearing)));
+  }
+
+  public void reachGoalOneShot(double h) {
+    m_motor.setControl(m_oneShotControlRequest.withPosition(h / (Elevator.kElevatorDrumRadius * 2 * Math.PI / Elevator.kElevatorGearing)));
   }
 
 }

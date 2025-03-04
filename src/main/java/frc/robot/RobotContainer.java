@@ -5,12 +5,14 @@
 package frc.robot;
 
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.commands.MainSystem.FollowTrajectory;
 import frc.robot.sims.MainRobotMechanism;
 import frc.robot.subsystems.ArmSubsystem;
 import frc.robot.subsystems.ElevatorSubsystem;
 import frc.robot.subsystems.MainMechSubsystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import frc.robot.util.LoadPath;
+import frc.robot.util.LoadTrajectory;
 import swervelib.SwerveInputStream;
 
 import java.nio.file.Path;
@@ -94,6 +96,7 @@ public class RobotContainer {
 
   public RobotContainer() {
     LoadPath.init();
+    LoadTrajectory.init();
 
     // Configure the trigger bindings
     NamedCommands.registerCommand("CoralIntake", m_mainMechSubsystem.CoralIntakeCommand());
@@ -127,6 +130,8 @@ public class RobotContainer {
     m_operatorController.button(7).onTrue(NamedCommands.getCommand("AlgaeGround"));
     m_operatorController.button(10).onTrue(NamedCommands.getCommand("Closed"));
 
+    m_operatorController.leftTrigger().and(m_operatorController.rightTrigger()::getAsBoolean).onTrue(new FollowTrajectory(m_armSubsystem, m_elevatorSubsystem, LoadTrajectory.trajectory));
+
     Command driveFieldOrientedAnglularVelocity = m_drivebase.driveFieldOriented(driveAngularVelocity);
     
     m_drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity);
@@ -143,6 +148,7 @@ public class RobotContainer {
        // Kendini ortalaması için ortalama pathi de yazılabilir?
 
     // Çalışmayabilir bilmiyorum ki bir sürü command chainledim mantığı doğru mu yaptım emin değilim
+    /*
     m_simController.pov(270).onTrue(
       AutoBuilder.pathfindToPose(
         AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded).getTagPose(18).get().toPose2d(), 
@@ -191,6 +197,7 @@ public class RobotContainer {
         .onlyWhile(m_simController.leftBumper()::getAsBoolean))
         .raceWith(AutoBuilder.pathfindThenFollowPath(LoadPath.coralL, m_drivebase.getConstraints())
         .onlyWhile(m_simController.rightBumper()::getAsBoolean)));
+        */
 
   }
 

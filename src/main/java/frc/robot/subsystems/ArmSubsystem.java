@@ -8,6 +8,7 @@ import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.NeutralOut;
 import com.ctre.phoenix6.controls.PositionVoltage;
@@ -18,6 +19,7 @@ import com.ctre.phoenix6.sim.TalonFXSimState;
 
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
@@ -38,6 +40,8 @@ public class ArmSubsystem extends SubsystemBase {
   private final PositionVoltage m_secondJointPositionVoltage = new PositionVoltage(0).withSlot(0);
   private final MotionMagicVoltage m_firstJointMotionMagic = new MotionMagicVoltage(0).withSlot(0);
   private final MotionMagicVoltage m_secondJointMotionMagic = new MotionMagicVoltage(0).withSlot(0);
+  private final MotionMagicExpoVoltage m_firstJointExpo = new MotionMagicExpoVoltage(0);
+  private final MotionMagicExpoVoltage m_secondJointExpo = new MotionMagicExpoVoltage(0);
   private final NeutralOut m_firstJointBrake = new NeutralOut();
   private final NeutralOut m_secondJointBrake = new NeutralOut();
 
@@ -205,6 +209,19 @@ public class ArmSubsystem extends SubsystemBase {
   public void reachGoalJ2(double goalJ2)
   {
     m_armSecondJointMotor.setControl(m_secondJointMotionMagic.withPosition(Units.degreesToRotations(goalJ2)
+    *Arm.SecondJoint.kArmReduction));
+  }
+
+  /*  Goal is in radians */
+  public void reachGoalJ1Expo(double goal)
+  {
+    m_armFirstJointMotor.setControl(m_firstJointExpo.withPosition(Units.radiansToRotations(goal)
+    *Arm.FirstJoint.kArmReduction));
+  }
+
+  public void reachGoalJ2Expo(double goal)
+  {
+    m_armSecondJointMotor.setControl(m_secondJointExpo.withPosition(Units.radiansToRotations(goal)
     *Arm.SecondJoint.kArmReduction));
   }
 
