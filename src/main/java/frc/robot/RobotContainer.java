@@ -147,57 +147,74 @@ public class RobotContainer {
        //AutoBuilder.pathfindToPose(null, m_drivebase.getConstraints());
        // Kendini ortalaması için ortalama pathi de yazılabilir?
 
-    // Çalışmayabilir bilmiyorum ki bir sürü command chainledim mantığı doğru mu yaptım emin değilim
-    /*
-    m_simController.pov(270).onTrue(
+
+    m_simController.pov(270).and(m_simController.leftBumper()::getAsBoolean).onTrue(
       AutoBuilder.pathfindToPose(
         AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded).getTagPose(18).get().toPose2d(), 
         m_drivebase.getConstraints())
-        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralA, m_drivebase.getConstraints())
-        .onlyWhile(m_simController.leftBumper()::getAsBoolean))
-        .raceWith(AutoBuilder.pathfindThenFollowPath(LoadPath.coralB, m_drivebase.getConstraints())
-        .onlyWhile(m_simController.rightBumper()::getAsBoolean)));
-    m_simController.pov(225).onTrue(
+        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralA, m_drivebase.getConstraints())));     
+    m_simController.pov(270).and(m_simController.rightBumper()::getAsBoolean).onTrue(
+      AutoBuilder.pathfindToPose(
+        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded).getTagPose(18).get().toPose2d(), 
+        m_drivebase.getConstraints())
+        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralA, m_drivebase.getConstraints())));
+
+    m_simController.pov(225).and(m_simController.leftBumper()::getAsBoolean).onTrue(
       AutoBuilder.pathfindToPose(
         AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded).getTagPose(17).get().toPose2d(), 
         m_drivebase.getConstraints())
-        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralC, m_drivebase.getConstraints())
-        .onlyWhile(m_simController.leftBumper()::getAsBoolean))
-        .raceWith(AutoBuilder.pathfindThenFollowPath(LoadPath.coralD, m_drivebase.getConstraints())
-        .onlyWhile(m_simController.rightBumper()::getAsBoolean)));
-    m_simController.pov(135).onTrue(
+        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralC, m_drivebase.getConstraints())));
+    m_simController.pov(225).and(m_simController.rightBumper()::getAsBoolean).onTrue(
+      AutoBuilder.pathfindToPose(
+        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded).getTagPose(17).get().toPose2d(), 
+        m_drivebase.getConstraints())
+        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralD, m_drivebase.getConstraints())));
+    
+    m_simController.pov(135).and(m_simController.leftBumper()::getAsBoolean).onTrue(
       AutoBuilder.pathfindToPose(
         AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded).getTagPose(22).get().toPose2d(), 
         m_drivebase.getConstraints())
-        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralE, m_drivebase.getConstraints())
-        .onlyWhile(m_simController.leftBumper()::getAsBoolean))
-        .raceWith(AutoBuilder.pathfindThenFollowPath(LoadPath.coralF, m_drivebase.getConstraints())
-        .onlyWhile(m_simController.rightBumper()::getAsBoolean)));
-    m_simController.pov(90).onTrue(
+        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralE, m_drivebase.getConstraints())));
+    m_simController.pov(135).and(m_simController.rightBumper()::getAsBoolean).onTrue(
+      AutoBuilder.pathfindToPose(
+        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded).getTagPose(22).get().toPose2d(), 
+        m_drivebase.getConstraints())
+        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralF, m_drivebase.getConstraints())));
+    
+
+    m_simController.pov(90).and(m_simController.leftBumper()::getAsBoolean).onTrue(
       AutoBuilder.pathfindToPose(
         AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded).getTagPose(21).get().toPose2d(), 
         m_drivebase.getConstraints())
-        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralG, m_drivebase.getConstraints())
-        .onlyWhile(m_simController.leftBumper()::getAsBoolean))
-        .raceWith(AutoBuilder.pathfindThenFollowPath(LoadPath.coralH, m_drivebase.getConstraints())
-        .onlyWhile(m_simController.rightBumper()::getAsBoolean)));
-    m_simController.pov(45).onTrue(
+        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralG, m_drivebase.getConstraints())));
+    m_simController.pov(90).and(m_simController.rightBumper()::getAsBoolean).onTrue(
+      AutoBuilder.pathfindToPose(
+        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded).getTagPose(21).get().toPose2d(), 
+        m_drivebase.getConstraints())
+        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralH, m_drivebase.getConstraints())));
+    
+    m_simController.pov(45).and(m_simController.leftBumper()::getAsBoolean).onTrue(
       AutoBuilder.pathfindToPose(
         AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded).getTagPose(20).get().toPose2d(), 
         m_drivebase.getConstraints())
-        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralI, m_drivebase.getConstraints())
-        .onlyWhile(m_simController.leftBumper()::getAsBoolean))
-        .raceWith(AutoBuilder.pathfindThenFollowPath(LoadPath.coralJ, m_drivebase.getConstraints())
-        .onlyWhile(m_simController.rightBumper()::getAsBoolean)));
-    m_simController.pov(315).onTrue(
+        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralI, m_drivebase.getConstraints())));
+    m_simController.pov(45).and(m_simController.rightBumper()::getAsBoolean).onTrue(
+      AutoBuilder.pathfindToPose(
+        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded).getTagPose(20).get().toPose2d(), 
+        m_drivebase.getConstraints())
+        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralJ, m_drivebase.getConstraints())));
+    
+    m_simController.pov(315).and(m_simController.leftBumper()::getAsBoolean).onTrue(
       AutoBuilder.pathfindToPose(
         AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded).getTagPose(19).get().toPose2d(), 
         m_drivebase.getConstraints())
-        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralK, m_drivebase.getConstraints())
-        .onlyWhile(m_simController.leftBumper()::getAsBoolean))
-        .raceWith(AutoBuilder.pathfindThenFollowPath(LoadPath.coralL, m_drivebase.getConstraints())
-        .onlyWhile(m_simController.rightBumper()::getAsBoolean)));
-        */
+        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralK, m_drivebase.getConstraints())));
+    m_simController.pov(315).and(m_simController.rightBumper()::getAsBoolean).onTrue(
+      AutoBuilder.pathfindToPose(
+        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded).getTagPose(19).get().toPose2d(), 
+        m_drivebase.getConstraints())
+        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralL, m_drivebase.getConstraints())));
+            
 
   }
 
