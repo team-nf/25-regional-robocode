@@ -29,9 +29,11 @@ import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -87,7 +89,13 @@ public class RobotContainer {
       .getStructTopic("3dSim/armStage0", Pose3d.struct).publish();
   StructPublisher<Pose3d> armStage1pub = NetworkTableInstance.getDefault()
       .getStructTopic("3dSim/armStage1", Pose3d.struct).publish();
-      
+
+  StructPublisher<Pose2d> armTrajPub = NetworkTableInstance.getDefault()
+  .getStructTopic("3dSim/armTrajectory", Pose2d.struct).publish();
+  
+  StructArrayPublisher<Pose3d> armTrajectory = NetworkTableInstance.getDefault()
+  .getStructArrayTopic("3dSim/trajectory", Pose3d.struct).publish();
+
   private double eleGeneralHeight = 0;
   private double eleStage0Height = 0;
   private double eleStage1Height = 0;
@@ -245,7 +253,15 @@ public class RobotContainer {
                                 Constants.Arm.SecondJoint.kSimOffsets[1], 
                                 Constants.Arm.SecondJoint.kSimOffsets[2] + Constants.Arm.FirstJoint.kArmLength * Math.cos(Units.degreesToRadians(armJ1Angle)) + eleGeneralHeight, 
         new Rotation3d(0,Units.degreesToRadians(armJ1Angle+ armJ2Angle-90),0)));
-      
+
+    Pose3d[] traj = new Pose3d[100];
+    for (int i = 0; i < LoadTrajectory.trajectory.getX().length; i++) {
+      traj[i] = new Pose3d(
+        (m_drivebase.getPose().getX() - LoadTrajectory.trajectory.getX()[i]), m_drivebase.getPose().getY() , LoadTrajectory.trajectory.getY()[i],
+        new Rotation3d(0, 0, LoadTrajectory.trajectory.getTheta()[i]));
+    }
+    armTrajectory.set(traj);
+
     m_robotMechanism.update(eleGeneralHeight, armJ1Angle, armJ2Angle);
 
     m_drivebase.getSwerveDrive().addVisionMeasurement(m_drivebase.getSwerveDrive().getSimulationDriveTrainPose().orElse(new Pose2d()), Timer.getFPGATimestamp());;

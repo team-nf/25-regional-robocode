@@ -11,15 +11,19 @@ public class ArmTraj {
     private final double[] theta;
     private final double[] phi;
     private final double[] h;
+    private final double[] x;
+    private final double[] y;
 
     public int length;
 
     // Constructor
-    public ArmTraj(String name, double[] theta, double[] phi, double[] h) {
+    public ArmTraj(String name, double[] theta, double[] phi, double[] h, double[] x, double[] y) {
         this.name = name;
         this.theta = theta;
         this.phi = phi;
         this.h = h;
+        this.x = x;
+        this.y = y;
 
         // gereksiz
         if (this.theta.length == this.phi.length && this.phi.length == this.h.length) {
@@ -42,6 +46,14 @@ public class ArmTraj {
 
     public double[] getH() {
         return h;
+    }
+
+    public double[] getX() {
+        return x;
+    }
+
+    public double[] getY() {
+        return y;
     }
 
     @Override

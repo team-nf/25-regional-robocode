@@ -75,6 +75,8 @@ def post():
     format["theta"] = {f"{i}": theta for i, theta in enumerate(theta_vals)} 
     format["h"] = {f"{i}": h for i, h in enumerate(h_vals)}
     format["phi"] = {f"{i}": phi for i, phi in enumerate(phi_vals)}
+    format["x"] = {f"{i}": x for i, x in enumerate(x_vals)}
+    format["y"] = {f"{i}": y for i, y in enumerate(y_vals)}
 
     with open('trajectory.json', 'w') as f:
         json.dump(format, f, separators=(',\n', ': \n'))
