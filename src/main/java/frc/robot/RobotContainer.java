@@ -68,16 +68,21 @@ public class RobotContainer {
       () -> m_driverController.getRightX() * angleK,
       () -> m_driverController.getRightY() * angleK);
 
-    if (RobotBase.isReal()) {
+    if (RobotBase.isReal()) { 
+      // REAL
       m_drivebase.setDefaultCommand(driveFieldOrientedDirectAngle);
-    } else if (RobotBase.isSimulation()) {
+    } else if (RobotBase.isSimulation()) {  
+      // SIMULATION
       m_drivebase.setDefaultCommand(m_drivebase.simDriveCommand( 
         () -> (MathUtil.applyDeadband(m_driverController.getLeftY(), 0.2) * driveK),
         () -> MathUtil.applyDeadband(m_driverController.getLeftX(), 0.2) * driveK,
         () -> m_driverController.getRightX() * angleK));
-    } else if (RobotState.isTest()) {
+    } else if (RobotState.isTest()) {  // bu anlamsız bu noktada yüşa saçmaladın
+      // TEST MODE
       m_drivebase.setDefaultCommand(driveFieldOrientedDirectAngle);
     } 
+
+
       // Simulation
     if (RobotBase.isSimulation()) {
       // Herhalde kullanmayız
@@ -109,10 +114,10 @@ public class RobotContainer {
     if (RobotBase.isSimulation()) {
     m_driverController.a().onTrue(m_elevator.setPositionSimulation());
     }
-    m_driverController.a().onTrue(m_elevator.reachGoalAndHold(-0));
-    m_driverController.b().onTrue(m_elevator.reachGoalAndHold(-0.09));
-    m_driverController.y().onTrue(m_elevator.reachGoalAndHold(-0.49));
-    m_driverController.x().onTrue(m_elevator.reachGoalAndHold(-1.26));
+    m_driverController.a().and(RobotState::isTeleop).onTrue(m_elevator.reachGoalAndHold(-0));
+    m_driverController.b().and(RobotState::isTeleop).onTrue(m_elevator.reachGoalAndHold(-0.09));
+    m_driverController.y().and(RobotState::isTeleop).onTrue(m_elevator.reachGoalAndHold(-0.49));
+    m_driverController.x().and(RobotState::isTeleop).onTrue(m_elevator.reachGoalAndHold(-1.26));
   }
 
 
