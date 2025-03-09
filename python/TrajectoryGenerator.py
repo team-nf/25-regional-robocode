@@ -27,7 +27,7 @@ y_vals = poly_y(t)
 
 # Robot kol parametreleri
 L = 0.375  # Kol uzunluğu
-H = 1.85
+H = 1.45
 
 # Açılar ve yükseklik hesaplama
 theta_vals = np.arccos(x_vals/L)
@@ -42,7 +42,9 @@ ax.set_xlim(0, 2.5)
 ax.set_ylim(0, 2.5)
 line, = ax.plot([], [], 'ro-', lw=3)
 path, = ax.plot([], [], 'b--', lw=1)  # This will plot the path
+gripper_path, = ax.plot([], [], 'g--', lw=1)
 path_x, path_y = [], []  # Store the path coordinates
+gripper_path_x, gripper_path_y = [], []
 
 # Initialize function
 def init():
@@ -59,16 +61,18 @@ def update(frame):
     x_end = L * np.cos(theta)
     y_end = L * np.sin(theta) + h
     
-    line.set_data([0, x_end], [h, y_end])
+    line.set_data([0, x_end, (x_end + 0.1 * np.cos(phi))], [h, y_end, (y_end + 0.1 * np.sin(phi))])
     # Append current position to the path
     path_x.append(x_end)
     path_y.append(y_end)
-
+    gripper_path_x.append((x_end + 0.1 * np.cos(phi)))
+    gripper_path_y.append((y_end + 0.1 * np.sin(phi)))
     
     # Update the path plot
     path.set_data(path_x, path_y)
+    gripper_path.set_data(gripper_path_x, gripper_path_y)
     print(np.sqrt(x_end**2 + (y_end-h)**2))
-    return line, path
+    return line, path, gripper_path
 
 def post():
     format = {}
