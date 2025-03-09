@@ -6,6 +6,7 @@ package frc.robot;
 
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.MainSystem.FollowTrajectory;
+import frc.robot.commands.Swerve.PathfindToReef;
 import frc.robot.sims.MainRobotMechanism;
 import frc.robot.subsystems.ArmSubsystem;
 import frc.robot.subsystems.ElevatorSubsystem;
@@ -157,71 +158,35 @@ public class RobotContainer {
 
 
     m_simController.pov(270).and(m_simController.leftBumper()::getAsBoolean).onTrue(
-      AutoBuilder.pathfindToPose(
-        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded).getTagPose(18).get().toPose2d(), 
-        m_drivebase.getConstraints())
-        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralA, m_drivebase.getConstraints())));     
+      new PathfindToReef.id(18).withCorrectionPath(LoadPath.coralA).withConstraints(m_drivebase.getConstraints()).getPath().command());     
     m_simController.pov(270).and(m_simController.rightBumper()::getAsBoolean).onTrue(
-      AutoBuilder.pathfindToPose(
-        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded).getTagPose(18).get().toPose2d(), 
-        m_drivebase.getConstraints())
-        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralA, m_drivebase.getConstraints())));
+      new PathfindToReef.id(18).withCorrectionPath(LoadPath.coralB).withConstraints(m_drivebase.getConstraints()).getPath().command());
 
     m_simController.pov(225).and(m_simController.leftBumper()::getAsBoolean).onTrue(
-      AutoBuilder.pathfindToPose(
-        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded).getTagPose(17).get().toPose2d(), 
-        m_drivebase.getConstraints())
-        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralC, m_drivebase.getConstraints())));
+      new PathfindToReef.id(17).withCorrectionPath(LoadPath.coralC).withConstraints(m_drivebase.getConstraints()).getPath().command());
     m_simController.pov(225).and(m_simController.rightBumper()::getAsBoolean).onTrue(
-      AutoBuilder.pathfindToPose(
-        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded).getTagPose(17).get().toPose2d(), 
-        m_drivebase.getConstraints())
-        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralD, m_drivebase.getConstraints())));
+      new PathfindToReef.id(17).withCorrectionPath(LoadPath.coralD).withConstraints(m_drivebase.getConstraints()).getPath().command());
     
     m_simController.pov(135).and(m_simController.leftBumper()::getAsBoolean).onTrue(
-      AutoBuilder.pathfindToPose(
-        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded).getTagPose(22).get().toPose2d(), 
-        m_drivebase.getConstraints())
-        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralE, m_drivebase.getConstraints())));
+      new PathfindToReef.id(22).withCorrectionPath(LoadPath.coralE).withConstraints(m_drivebase.getConstraints()).getPath().command());
     m_simController.pov(135).and(m_simController.rightBumper()::getAsBoolean).onTrue(
-      AutoBuilder.pathfindToPose(
-        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded).getTagPose(22).get().toPose2d(), 
-        m_drivebase.getConstraints())
-        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralF, m_drivebase.getConstraints())));
+      new PathfindToReef.id(22).withCorrectionPath(LoadPath.coralF).withConstraints(m_drivebase.getConstraints()).getPath().command());
     
 
     m_simController.pov(90).and(m_simController.leftBumper()::getAsBoolean).onTrue(
-      AutoBuilder.pathfindToPose(
-        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded).getTagPose(21).get().toPose2d(), 
-        m_drivebase.getConstraints())
-        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralG, m_drivebase.getConstraints())));
+      new PathfindToReef.id(21).withCorrectionPath(LoadPath.coralG).withConstraints(m_drivebase.getConstraints()).getPath().command());
     m_simController.pov(90).and(m_simController.rightBumper()::getAsBoolean).onTrue(
-      AutoBuilder.pathfindToPose(
-        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded).getTagPose(21).get().toPose2d(), 
-        m_drivebase.getConstraints())
-        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralH, m_drivebase.getConstraints())));
+      new PathfindToReef.id(21).withCorrectionPath(LoadPath.coralH).withConstraints(m_drivebase.getConstraints()).getPath().command());
     
     m_simController.pov(45).and(m_simController.leftBumper()::getAsBoolean).onTrue(
-      AutoBuilder.pathfindToPose(
-        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded).getTagPose(20).get().toPose2d(), 
-        m_drivebase.getConstraints())
-        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralI, m_drivebase.getConstraints())));
+      new PathfindToReef.id(20).withCorrectionPath(LoadPath.coralI).withConstraints(m_drivebase.getConstraints()).getPath().command());
     m_simController.pov(45).and(m_simController.rightBumper()::getAsBoolean).onTrue(
-      AutoBuilder.pathfindToPose(
-        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded).getTagPose(20).get().toPose2d(), 
-        m_drivebase.getConstraints())
-        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralJ, m_drivebase.getConstraints())));
+      new PathfindToReef.id(20).withCorrectionPath(LoadPath.coralJ).withConstraints(m_drivebase.getConstraints()).getPath().command());
     
     m_simController.pov(315).and(m_simController.leftBumper()::getAsBoolean).onTrue(
-      AutoBuilder.pathfindToPose(
-        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded).getTagPose(19).get().toPose2d(), 
-        m_drivebase.getConstraints())
-        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralK, m_drivebase.getConstraints())));
+      new PathfindToReef.id(19).withCorrectionPath(LoadPath.coralK).withConstraints(m_drivebase.getConstraints()).getPath().command());
     m_simController.pov(315).and(m_simController.rightBumper()::getAsBoolean).onTrue(
-      AutoBuilder.pathfindToPose(
-        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded).getTagPose(19).get().toPose2d(), 
-        m_drivebase.getConstraints())
-        .andThen(AutoBuilder.pathfindThenFollowPath(LoadPath.coralL, m_drivebase.getConstraints())));
+      new PathfindToReef.id(19).withCorrectionPath(LoadPath.coralL).withConstraints(m_drivebase.getConstraints()).getPath().command());
             
 
   }
