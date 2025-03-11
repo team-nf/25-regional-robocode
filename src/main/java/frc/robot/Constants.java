@@ -21,7 +21,7 @@ public final class Constants {
   public static final double MAX_SPEED = 4.0;
 
   public class InitialConstants {
-    public static final double[] EncoderStartAngles = {231/2,140/2};
+    public static final double[] EncoderStartAngles = {231/2,358/2};
   }
 
   public static class AutonConstants {
@@ -146,7 +146,7 @@ public final class Constants {
       public static final double[] kSimOffsets = {0.091,0.007,0.275};
       
       public static final double kAngleTolerance = 0.5;
-      public static final double kArmSafetyFactor = 1.5;
+      public static final double kArmSafetyFactor = 1;
     }
 
   }
@@ -179,7 +179,8 @@ public final class Constants {
     public static final double kElevatorMMJ = 0; // kullanmıyoruz
 
     public static final double kElevatorGearing = 12.0;
-    public static final double kElevatorDrumRadius = 0.02;
+    public static final double kElevatorDrumRadius = 0.021;
+    public static final double kElevatorDistPerRotation = 0.02;
     public static final double kCarriageMass = 13.0; // kg
 
     public static final double kAmpLimit = 40.0;
@@ -187,7 +188,7 @@ public final class Constants {
 
     public static final double kSetpointMeters = 0.75;
     // Encoder is reset to measure 0 at the bottom, so minimum height is 0.
-    public static final double kMinElevatorHeightMeters = 0.1;
+    public static final double kMinElevatorHeightMeters = 0.07;
     public static final double kMaxElevatorHeightMeters = 1.45;
     public static final double kElevatorTolerance = 0.06;
     public static final double kReadyPos = 0.2;
@@ -199,19 +200,62 @@ public final class Constants {
     // Length, Angle 1, Angle 2
     public static final double[] CoralStage1 = {0.25, 150, 170};      //Coral Intake
     public static final double[] CoralStage2 = {0.25, 160, 168};   //Coral Stage 1
-    public static final double[] CoralStage3 = {0.49, 180, 152};    //Coral Stage 2
-    public static final double[] CoralStage4 = {1.34, 180, 150};    //Coral Stage 3
-    public static final double[] CoralIntake = {0.45, 146, 340};    //Coral Stage 4
-    public static final double[] AlgaeThrowNet = {1.3, 187, 190};    //Algae Shoot
+    public static final double[] CoralStage3 = {0.51, 180, 145};    //Coral Stage 2
+    public static final double[] CoralStage4 = {1.21, 180, 145};    //Coral Stage 3
+    public static final double[] CoralIntake = {0.38, 155, 340};    //Coral Stage 4
+    public static final double[] AlgaeThrowNet = {1.40, 187, 190};    //Algae Shoot
     public static final double[] AlgaeThrowProcessor = {1.3, 187, 190};    //Algae Shoot
-    public static final double[] AlgaeStage23 = {0.82, 250, 150};     //Algae Stage 2-3
-    public static final double[] AlgaeStage34 = {0.82, 250, 150};     //Algae Stage 3-4
-    public static final double[] AlgaeGround = {0.25, 270, 180};  //Algae Ground
+    public static final double[] AlgaeStage23 = {0.72, 250, 150};     //Algae Stage 2-3
+    public static final double[] AlgaeStage34 = {0.28, 250, 150};     //Algae Stage 3-4
+    public static final double[] AlgaeGround = {0.07, 270, 196};  //Algae Ground
     public static final double[] AlgaeFromCoral = {0.25, 270, 180};  //Algae Ground
     public static final double[] AlgaeCarry = {0.3, 180, 180};  //Algae Ground
-    public static final double[] Closed = {0.30, 170, 340};  //Closed
+    public static final double[] Closed = {0.15, 170, 340};  //Closed
     public static final double[] FullyClosed = {0.0, 170, 340};
+  }
 
+  public class AutoConstants
+  {
+    public static final double[] stage4Pos18R = {3.01,3.87,-0.5};
+    public static final double[] stage3Pos18R = {3.04,3.9,-0.5};
+    public static final double[] checkTagPos18 = {2.55,3.83,0};
+
+    public static final double[] tag1 = {16.6972, 0.6553, 1.4859, 126, 0};
+    public static final double[] tag2 = {16.6972, 7.3965, 1.4859, 234, 0};
+    public static final double[] tag3 = {11.5608, 8.0556, 1.3017, 270, 0};
+    public static final double[] tag4 = {9.2761, 6.1377, 1.8679, 0, 30};
+    public static final double[] tag5 = {9.2761, 1.9149, 1.8679, 0, 30};
+    public static final double[] tag6 = {13.4744, 3.3063, 0.3081, 300, 0};
+    public static final double[] tag7 = {13.8905, 4.0259, 0.3081, 0, 0};
+    public static final double[] tag8 = {13.4744, 4.7455, 0.3081, 60, 0};
+    public static final double[] tag9 = {12.6434, 4.7455, 0.3081, 120, 0};
+    public static final double[] tag10 = {12.2273, 4.0259, 0.3081, 180, 0};
+    public static final double[] tag11 = {12.6434, 3.3063, 0.3081, 240, 0};
+    public static final double[] tag12 = {0.8512, 0.6553, 1.4859, 54, 0};
+    public static final double[] tag13 = {0.8512, 7.3965, 1.4859, 306, 0};
+    public static final double[] tag14 = {8.2723, 6.1377, 1.8679, 180, 30};
+    public static final double[] tag15 = {8.2723, 1.9149, 1.8679, 180, 30};
+    public static final double[] tag16 = {5.9875, -0.0038, 1.3017, 90, 0};
+    public static final double[] tag17 = {4.0739, 3.3063, 0.3081, 240, 0};
+    public static final double[] tag18 = {3.6576, 4.0259, 0.3081, 180, 0};
+    public static final double[] tag19 = {4.0739, 4.7455, 0.3081, 120, 0};
+    public static final double[] tag20 = {4.9047, 4.7455, 0.3081, 60, 0};
+    public static final double[] tag21 = {5.3210, 4.0259, 0.3081, 0, 0};
+    public static final double[] tag22 = {4.9047, 3.3063, 0.3081, 300, 0};
+
+    public static final double xOffsetS4 = stage4Pos18R[0] - tag18[0];
+    public static final double yOffsetS4 = stage4Pos18R[1] - tag18[1];
+    public static final double zRotOffsetS4 = stage4Pos18R[2] - tag18[3];
+
+    public static final double xOffsetS3 = stage3Pos18R[0] - tag18[0];
+    public static final double yOffsetS3 = stage3Pos18R[1] - tag18[1];
+    public static final double zRotOffsetS3 = stage3Pos18R[2] - tag18[3];
+
+    public static final double xOffsetCT = checkTagPos18[0] - tag18[0];
+    public static final double yOffsetCT = checkTagPos18[1] - tag18[1];
+    public static final double zRotOffsetCT = checkTagPos18[2] - tag18[3];
+
+    public static final double LL_Accuracy = 0.025;
   }
 
 }

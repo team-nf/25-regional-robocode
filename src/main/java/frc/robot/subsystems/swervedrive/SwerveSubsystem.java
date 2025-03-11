@@ -15,6 +15,9 @@ import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.PathConstraints;
 
+import edu.wpi.first.apriltag.AprilTag;
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -29,13 +32,19 @@ import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.LimelightHelpers;
 import frc.robot.Robot;
+import frc.robot.Constants.AutoConstants;
 import swervelib.SwerveDrive;
 import swervelib.parser.SwerveParser;
+import swervelib.telemetry.SwerveDriveTelemetry;
+import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
+
 import static edu.wpi.first.units.Units.Meter;
 
 
@@ -47,8 +56,12 @@ public class SwerveSubsystem extends SubsystemBase {
   StructPublisher<Pose3d> publisher = NetworkTableInstance.getDefault()
       .getStructTopic("3dSim/fakeRobot", Pose3d.struct).publish();
 
+  private double driveMultiplier = 1;
+
+
   /** Creates a new SwerveSubsystem. */
   public SwerveSubsystem() {
+    SwerveDriveTelemetry.verbosity = TelemetryVerbosity.INFO;
     try
     {
       swerveDrive = new SwerveParser(swerveJsonDirectory).createSwerveDrive(Constants.MAX_SPEED,
@@ -62,6 +75,8 @@ public class SwerveSubsystem extends SubsystemBase {
     {
       throw new RuntimeException(e);
     }
+    //swerveDrive.setHeadingCorrection(false); // Heading correction should only be used while controlling the robot via angle.
+    //swerveDrive.setCosineCompensator(!SwerveDriveTelemetry.isSimulation); // Disables cosine compensation for simulations since it causes discrepancies not seen in real life.
     setupPathPlanner();
   }
 
@@ -73,6 +88,9 @@ public class SwerveSubsystem extends SubsystemBase {
       publisher.set(new Pose3d(swerveDrive.getPose().getX(),swerveDrive.getPose().getY(),0, new Rotation3d(swerveDrive.getPose().getRotation())));
     }
 
+    if(java.util.Arrays.asList("ThrowAlgaeNet", "AlgaeGround", "Algae23", "Algae34", "CoralStage4", "CoralStage3", "CoralStage2")
+              .contains(SmartDashboard.getString("MechState", "Closed"))) driveMultiplier = 0.5;
+    else driveMultiplier = 1;
   }
 
   public void driveFieldOriented(ChassisSpeeds velocity)
@@ -190,7 +208,9 @@ public class SwerveSubsystem extends SubsystemBase {
       {
         doRejectUpdate = true;
       }
-      if(mt1.rawFiducials[0].ta < 0.05) doRejectUpdate = true;
+      if(mt1.rawFiducials[0].ta < AutoConstants.LL_Accuracy) doRejectUpdate = true;
+      SmartDashboard.putNumber("Vision_ta", mt1.rawFiducials[0].ta);
+
     }
 
     if(mt1.tagCount == 0)
@@ -205,6 +225,8 @@ public class SwerveSubsystem extends SubsystemBase {
           mt1.pose,
           mt1.timestampSeconds);
     }
+
+
     swerveDrive.updateOdometry();
   }
 
@@ -232,14 +254,62 @@ public class SwerveSubsystem extends SubsystemBase {
     swerveDrive.updateOdometry();
   }
 
-    public PathConstraints getConstraints() {
+  public PathConstraints getConstraints() {
     return new PathConstraints(
-        swerveDrive.getMaximumChassisVelocity(), 1.0,
-        swerveDrive.getMaximumChassisAngularVelocity(), Units.degreesToRadians(180));
+        swerveDrive.getMaximumChassisVelocity()/1.5, 1.0/1.5,
+        swerveDrive.getMaximumChassisAngularVelocity()/1.5, Units.degreesToRadians(180)/1.5);
   }
 
   public void zeroGyro()
   {
     swerveDrive.zeroGyro();
   }
+
+  public Command goToReef(int id, boolean isLeft, int stage)
+  {
+    double x_offset = AutoConstants.xOffsetS4;
+    double y_offset = AutoConstants.yOffsetS4;
+    double theta_offset = AutoConstants.zRotOffsetS4;
+
+    if(stage == 4)
+    {
+      x_offset = AutoConstants.xOffsetS4;
+      y_offset = AutoConstants.yOffsetS4;
+      theta_offset = AutoConstants.zRotOffsetS4;
+    }
+    else if(stage == 3)
+    {
+        x_offset = AutoConstants.xOffsetS3;
+        y_offset = AutoConstants.yOffsetS3;
+        theta_offset = AutoConstants.zRotOffsetS3;
+    }
+
+    if(isLeft)
+    {
+      //x_offset = x_offset;
+      y_offset = -y_offset*1.5;
+      theta_offset = -theta_offset;
+    }
+
+    Pose3d aprilTagPose = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape).getTagPose(id).orElse(new Pose3d(3,3,0, new Rotation3d(0,0,0)));
+    
+    double theta_tag =  aprilTagPose.getRotation().getZ() + Units.degreesToRadians(AutoConstants.zRotOffsetCT); 
+
+    double x_tag = aprilTagPose.getX() + AutoConstants.xOffsetCT*Math.cos(theta_tag) -  AutoConstants.yOffsetCT*Math.sin(theta_tag);
+    double y_tag = aprilTagPose.getY() + AutoConstants.yOffsetCT*Math.cos(theta_tag) +  AutoConstants.xOffsetCT*Math.sin(theta_tag);
+
+    double theta_reef = aprilTagPose.getRotation().getZ() + Units.degreesToRadians(theta_offset);
+
+    double x_reef = aprilTagPose.getX() + x_offset*Math.cos(theta_reef)*0.9 - y_offset*Math.sin(theta_reef)*0.9;
+    double y_reef = aprilTagPose.getY() + y_offset*Math.cos(theta_reef)*0.9 + x_offset*Math.sin(theta_reef)*0.9;
+
+    return AutoBuilder.pathfindToPose(new Pose2d(new Translation2d(x_tag,y_tag), new Rotation2d(theta_tag)), getConstraints())
+                        .andThen(AutoBuilder.pathfindToPose(new Pose2d(new Translation2d(x_reef,y_reef), new Rotation2d(theta_reef)), getConstraints()));
+  }
+
+  public double getDriveMultiplier()
+  {
+    return driveMultiplier;
+  }
 }
+

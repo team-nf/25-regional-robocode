@@ -259,9 +259,10 @@ public class MainMechSubsystem extends SubsystemBase {
 
   public void CalculateArmAngleLimits()
   {
-    if(eleGeneralHeight/Arm.FirstJoint.kArmLength < 1)
+    double eleArmHeight = eleGeneralHeight + 0.1;
+    if(eleArmHeight/Arm.FirstJoint.kArmLength < 1)
     {
-      armJ1limitCW = Units.radiansToDegrees(Math.acos(eleGeneralHeight/(Arm.FirstJoint.kArmLength*Arm.FirstJoint.kArmSafetyFactor)));
+      armJ1limitCW = Units.radiansToDegrees(Math.acos(eleArmHeight/(Arm.FirstJoint.kArmLength*Arm.FirstJoint.kArmSafetyFactor)));
       armJ1limitCCW = 360 - armJ1limitCW;
     }
     else
@@ -270,7 +271,7 @@ public class MainMechSubsystem extends SubsystemBase {
       armJ1limitCCW = Arm.FirstJoint.kMaxAngle;
     }
 
-    Double j2Height = eleGeneralHeight - Arm.FirstJoint.kArmLength*Arm.FirstJoint.kArmSafetyFactor*Math.cos(Units.degreesToRadians(armJ1Angle));
+    Double j2Height = eleArmHeight - Arm.FirstJoint.kArmLength*Arm.FirstJoint.kArmSafetyFactor*Math.cos(Units.degreesToRadians(armJ1Angle));
 
     if(j2Height/Arm.SecondJoint.kArmLength < 1)
     { 

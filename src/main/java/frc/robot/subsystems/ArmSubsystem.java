@@ -104,6 +104,8 @@ public class ArmSubsystem extends SubsystemBase {
   private boolean isJ1GoalReached = false;
   private boolean isJ2GoalReached = false;
 
+  private boolean isInitialReady = false;
+
   public ArmSubsystem() {
         TalonFXConfiguration firstJointConfigs = new TalonFXConfiguration();
         firstJointConfigs.Slot0.kS = Arm.FirstJoint.kArmJoint1_kS;
@@ -183,7 +185,7 @@ public class ArmSubsystem extends SubsystemBase {
 
     armJ1limitCCW = SmartDashboard.getNumber("Arm/J1-CCW-Limit", Arm.FirstJoint.kMaxAngle);
     armJ1limitCW = SmartDashboard.getNumber("Arm/J1-CW-Limit", Arm.FirstJoint.kMinAngle);
-    armJ2limitCCW = SmartDashboard.getNumber("Arm/J2-CCW-Limit", Arm.SecondJoint.kMaxAngle);
+    armJ2limitCCW = SmartDashboard.getNumber("Arm/J2-CCW-Limit", Arm.SecondJoint.kMaxAngle) + 15;
     armJ2limitCW = SmartDashboard.getNumber("Arm/J2-CW-Limit", Arm.SecondJoint.kMinAngle);
     isArmReady = SmartDashboard.getBoolean("Arm/isArmReady", false);
 
@@ -194,7 +196,7 @@ public class ArmSubsystem extends SubsystemBase {
 
 
     if(RobotState.isDisabled()) NeutralOutMotors();
-    if(isArmReady)
+    if(isInitialReady)
     {
       armJ1LastAngle = firstJointAngle;
       armJ1LastAngle = secondJointAngle;
@@ -262,7 +264,8 @@ public class ArmSubsystem extends SubsystemBase {
 
   public void reachGoal(double goalJ1, double goalJ2) 
   {
-    if(isArmReady)
+    if(isArmReady && !isInitialReady) isInitialReady = true;
+    if(isInitialReady)
     {
       if((goalJ1 > firstJointAngle &&  goalJ1 >= armJ1limitCCW) || firstJointAngle >= armJ1limitCCW + 8)
       {

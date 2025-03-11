@@ -28,6 +28,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
@@ -56,6 +57,9 @@ public class RobotContainer {
   private final CommandXboxController m_driverController =
       new CommandXboxController(1);
 
+  private final SendableChooser<Integer> m_reefChooser = new SendableChooser<>();
+
+
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
     // Configure the trigger bindings
@@ -69,15 +73,18 @@ public class RobotContainer {
     NamedCommands.registerCommand("Closed", m_mainMechSubsystem.ClosedCommand());
     NamedCommands.registerCommand("FullyClosed", m_mainMechSubsystem.FullyClosedCommand());
     NamedCommands.registerCommand("Algae23", m_mainMechSubsystem.Algae23Command());
+    NamedCommands.registerCommand("Algae34", m_mainMechSubsystem.Algae34Command());
+    NamedCommands.registerCommand("AlgaeCarry", m_mainMechSubsystem.AlgaeCarryCommand());
+
 
     configureBindings();
 
-    double driveK = 0.4 ;
-    double angleK = -0.4;
+    double driveK = -0.3;
+    double angleK = -0.3;
 
     SwerveInputStream driveAngularVelocity = SwerveInputStream.of(m_drivebase.getSwerveDrive(),
-                                                                () -> m_driverController.getLeftY() * 1,
-                                                                () -> m_driverController.getLeftX() * 1)
+                                                                () -> m_driverController.getLeftY() * m_drivebase.getDriveMultiplier(),
+                                                                () -> m_driverController.getLeftX() * m_drivebase.getDriveMultiplier())
                                                             .withControllerRotationAxis(m_driverController::getRightX)
                                                             .deadband(OperatorConstants.DEADBAND)
                                                             .scaleTranslation(driveK)
@@ -94,11 +101,17 @@ public class RobotContainer {
 
     Command driveFieldOrientedAnglularVelocity = m_drivebase.driveFieldOriented(driveAngularVelocity);
 
-
     if (RobotBase.isReal()) { 
       m_drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity);
     }
 
+    m_reefChooser.setDefaultOption("1", 1);
+    m_reefChooser.addOption("2", 2);
+    m_reefChooser.addOption("3", 3);
+    m_reefChooser.addOption("4", 4);
+    m_reefChooser.addOption("5", 5);
+    m_reefChooser.addOption("6", 6);
+    SmartDashboard.putData("ReefN", m_reefChooser);
   }
 
   /**
@@ -112,16 +125,14 @@ public class RobotContainer {
    */
   private void configureBindings() {
     // Schedule `ExampleCommand` when `exampleCondition` changes to `true`
-    m_operatorController.a().onTrue(NamedCommands.getCommand("CoralStage1"));
-    m_operatorController.b().onTrue(NamedCommands.getCommand("CoralStage3"));
-    //m_operatorController.x().onTrue(NamedCommands.getCommand("CoralStage3"));
-    m_operatorController.x().onTrue(NamedCommands.getCommand("Algae23"));
-    m_operatorController.y().onTrue(NamedCommands.getCommand("CoralStage4"));
+    m_operatorController.a().onTrue(NamedCommands.getCommand("Algae23"));
+    m_operatorController.b().onTrue(NamedCommands.getCommand("Algae34"));
+    m_operatorController.x().onTrue(NamedCommands.getCommand("AlgaeGround"));
+    m_operatorController.y().onTrue(NamedCommands.getCommand("AlgaeCarry"));
     m_operatorController.button(5).onTrue(NamedCommands.getCommand("CoralIntake"));
     m_operatorController.button(6).onTrue(NamedCommands.getCommand("ThrowAlgaeNet"));
     m_operatorController.button(7).onTrue(NamedCommands.getCommand("AlgaeGround"));
     m_operatorController.button(8).onTrue(NamedCommands.getCommand("FullyClosed"));
-
     m_operatorController.button(10).onTrue(NamedCommands.getCommand("Closed"));
 
     //m_operatorController.button(9).onTrue(NamedCommands.getCommand("TestCommand"));
@@ -132,15 +143,83 @@ public class RobotContainer {
     m_driverController.pov(180).whileTrue(m_gripperSubsystem.takeCoral());
     m_driverController.pov(270).whileTrue(m_gripperSubsystem.throwCoral());
 
-    /* 
-    m_driverController.y().whileTrue(AutoBuilder.pathfindToPose(new Pose2d(new Translation2d(5.3,5.3),
-                                                                             new Rotation2d(Units.radiansToDegrees(-120))), m_drivebase.getConstraints())
+    m_driverController.button(8).onTrue(NamedCommands.getCommand("FullyClosed"));
+    m_driverController.button(10).onTrue(NamedCommands.getCommand("Closed"));
+   
+    /*
+    m_driverController.y().whileTrue(AutoBuilder.pathfindToPose(new Pose2d(new Translation2d(3.01,3.87),
+                                                                             new Rotation2d(Units.radiansToDegrees(0))), m_drivebase.getConstraints())
                                                                              .andThen(NamedCommands.getCommand("CoralStage4"))
                                                                              .andThen(m_gripperSubsystem.throwCoral()));
+    m_driverController.x().whileTrue(AutoBuilder.pathfindToPose(new Pose2d(new Translation2d(3.04,3.9),
+                                                                             new Rotation2d(Units.radiansToDegrees(0))), m_drivebase.getConstraints())
+                                                                             .andThen(NamedCommands.getCommand("CoralStage3"))
+                                                                             .andThen(m_gripperSubsystem.throwCoral()));
     */
-    m_driverController.y().whileTrue(AutoBuilder.pathfindToPose(new Pose2d(new Translation2d(5.3,5.3),
-                                                                             new Rotation2d(Units.radiansToDegrees(-120))), m_drivebase.getConstraints()));
-    m_driverController.a().onTrue(new RunCommand(() -> {m_drivebase.zeroGyro();}));
+                                                                             /*
+    m_driverController.y().whileTrue(AutoBuilder.pathfindToPose(new Pose2d(new Translation2d(3,4),
+                                                                             new Rotation2d(Units.radiansToDegrees(0))), m_drivebase.getConstraints()));
+    
+    */
+     
+    m_driverController.y().and(() -> {return checkCoral(17);}).whileTrue(m_drivebase.goToReef(17, true, 4)
+              .andThen(NamedCommands.getCommand("CoralStage4")));
+    m_driverController.x().and(() -> {return checkCoral(17);}).whileTrue(m_drivebase.goToReef(17, true, 3)
+              .andThen(NamedCommands.getCommand("CoralStage3")));
+    m_driverController.a().and(() -> {return checkCoral(17);}).whileTrue(m_drivebase.goToReef(17, false, 4)
+              .andThen(NamedCommands.getCommand("CoralStage4")));
+    m_driverController.b().and(() -> {return checkCoral(17);}).whileTrue(m_drivebase.goToReef(17, false, 3)
+              .andThen(NamedCommands.getCommand("CoralStage3")));
+
+    m_driverController.y().and(() -> {return checkCoral(18);}).whileTrue(m_drivebase.goToReef(18, true, 4)
+              .andThen(NamedCommands.getCommand("CoralStage4")));
+    m_driverController.x().and(() -> {return checkCoral(18);}).whileTrue(m_drivebase.goToReef(18, true, 3)
+              .andThen(NamedCommands.getCommand("CoralStage3")));
+    m_driverController.a().and(() -> {return checkCoral(18);}).whileTrue(m_drivebase.goToReef(18, false, 4)
+              .andThen(NamedCommands.getCommand("CoralStage4")));
+    m_driverController.b().and(() -> {return checkCoral(18);}).whileTrue(m_drivebase.goToReef(18, false, 3)
+              .andThen(NamedCommands.getCommand("CoralStage3")));
+
+    m_driverController.y().and(() -> {return checkCoral(19);}).whileTrue(m_drivebase.goToReef(19, true, 4)
+              .andThen(NamedCommands.getCommand("CoralStage4")));
+    m_driverController.x().and(() -> {return checkCoral(19);}).whileTrue(m_drivebase.goToReef(19, true, 3)
+              .andThen(NamedCommands.getCommand("CoralStage3")));
+    m_driverController.a().and(() -> {return checkCoral(19);}).whileTrue(m_drivebase.goToReef(19, false, 4)
+              .andThen(NamedCommands.getCommand("CoralStage4")));
+    m_driverController.b().and(() -> {return checkCoral(19);}).whileTrue(m_drivebase.goToReef(19, false, 3)
+              .andThen(NamedCommands.getCommand("CoralStage3")));
+
+    m_driverController.y().and(() -> {return checkCoral(20);}).whileTrue(m_drivebase.goToReef(20, true, 4)
+              .andThen(NamedCommands.getCommand("CoralStage4")));
+    m_driverController.x().and(() -> {return checkCoral(20);}).whileTrue(m_drivebase.goToReef(20, true, 3)
+              .andThen(NamedCommands.getCommand("CoralStage3")));
+    m_driverController.a().and(() -> {return checkCoral(20);}).whileTrue(m_drivebase.goToReef(20, false, 4)
+              .andThen(NamedCommands.getCommand("CoralStage4")));
+    m_driverController.b().and(() -> {return checkCoral(20);}).whileTrue(m_drivebase.goToReef(20, false, 3)
+              .andThen(NamedCommands.getCommand("CoralStage3")));
+
+    m_driverController.y().and(() -> {return checkCoral(21);}).whileTrue(m_drivebase.goToReef(21, true, 4)
+              .andThen(NamedCommands.getCommand("CoralStage4")));
+    m_driverController.x().and(() -> {return checkCoral(21);}).whileTrue(m_drivebase.goToReef(21, true, 3)
+              .andThen(NamedCommands.getCommand("CoralStage3")));
+    m_driverController.a().and(() -> {return checkCoral(21);}).whileTrue(m_drivebase.goToReef(21, false, 4)
+              .andThen(NamedCommands.getCommand("CoralStage4")));
+    m_driverController.b().and(() -> {return checkCoral(21);}).whileTrue(m_drivebase.goToReef(21, false, 3)
+              .andThen(NamedCommands.getCommand("CoralStage3")));
+
+    m_driverController.y().and(() -> {return checkCoral(22);}).whileTrue(m_drivebase.goToReef(22, true, 4)
+              .andThen(NamedCommands.getCommand("CoralStage4")));
+    m_driverController.x().and(() -> {return checkCoral(22);}).whileTrue(m_drivebase.goToReef(22, true, 3)
+              .andThen(NamedCommands.getCommand("CoralStage3")));
+    m_driverController.a().and(() -> {return checkCoral(22);}).whileTrue(m_drivebase.goToReef(22, false, 4)
+              .andThen(NamedCommands.getCommand("CoralStage4")));
+    m_driverController.b().and(() -> {return checkCoral(22);}).whileTrue(m_drivebase.goToReef(22, false, 3)
+              .andThen(NamedCommands.getCommand("CoralStage3")));
+
+    
+
+    m_driverController.button(6).whileTrue(new RunCommand(() -> {m_drivebase.zeroGyro();}));
+    m_driverController.button(5).onTrue(NamedCommands.getCommand("CoralIntake"));
   }
 
 
@@ -152,6 +231,11 @@ public class RobotContainer {
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
     return null;
+  }
+
+  public boolean checkCoral(int reefTag) {
+    SmartDashboard.putBoolean("testReefN18", (m_reefChooser.getSelected() + 16) == 18);
+    return (m_reefChooser.getSelected() + 16) == reefTag;
   }
 
   public void resetMechanisms() {

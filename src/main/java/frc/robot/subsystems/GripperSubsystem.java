@@ -26,8 +26,11 @@ public class GripperSubsystem extends SubsystemBase {
   private boolean hasAlgae = false;
   private boolean hasCoral = false;
 
-  private int timerA = 0;
-  private int timerC = 0;
+  private int timerA_take = 0;
+  private int timerC_take = 0;
+  private int timerA_throw = 0;
+  private int timerC_throw = 0;
+
 
   private final DigitalInput m_AlgaeSensor = new DigitalInput(GripperConstants.kAlgaeSensor);
   private final DigitalInput m_coralSensor = new DigitalInput(GripperConstants.kCoralSensor);
@@ -98,7 +101,7 @@ public class GripperSubsystem extends SubsystemBase {
   {return run(() -> sparkPID.setReference(targetVelocity, ControlType.kMAXMotionVelocityControl));}
 
   //public Command takeAlgae() {return runEnd(() -> sparkPID.setReference(.6, ControlType.kMAXMotionVelocityControl), this::stop).until(this::hasAlgae);}
-  public Command takeAlgae() {return runEnd(() -> m_spark.set(.6), this::stop).until(this::hasAlgae);}
+  public Command takeAlgae() {return run(() -> m_spark.set(.6)).until(this::hasAlgae);}
 
   //public Command takeCoral() {return runEnd(() -> sparkPID.setReference(-0.3, ControlType.kMAXMotionVelocityControl), this::stop).until(this::hasCoral);}
   public Command takeCoral() {return runEnd(() -> m_spark.set(-0.5), this::stop).until(this::hasCoral);}
@@ -121,34 +124,54 @@ public class GripperSubsystem extends SubsystemBase {
 
     // iğrenç şeyler yaptım -yüşa
     
-    if(!m_AlgaeSensor.get()) {
-      timerA++;
-      if (!m_AlgaeSensor.get() && timerA == 50) // periodic 20msde bir çağrılıyor, 1 saniye beklemek için 50 çağrı yapılmalı
+    if(!m_AlgaeSensor.get() && !hasAlgae) {
+      timerA_take++;
+      if (!m_AlgaeSensor.get() && timerA_take == 25) // periodic 20msde bir çağrılıyor, 1 saniye beklemek için 50 çağrı yapılmalı
       {
         this.hasAlgae = true;
-        timerA = 0;
+        timerA_take = 0;
       };
     } else {
-      if (hasAlgae) this.hasAlgae = false;
-      if (timerA != 0) timerA = 0;
+      if (timerA_take != 0) timerA_take = 0;
     }
 
-    if(!m_coralSensor.get()) {
-      timerC++;
-      if (!m_coralSensor.get() && timerC == 50) 
+    if(m_AlgaeSensor.get() && hasAlgae) {
+      timerA_throw++;
+      if (m_AlgaeSensor.get() && timerA_throw == 25) // periodic 20msde bir çağrılıyor, 1 saniye beklemek için 50 çağrı yapılmalı
       {
-        this.hasCoral = true;
-        timerC = 0;
+        this.hasAlgae = false;
+        timerA_throw = 0;
       };
     } else {
-      if (hasCoral) this.hasCoral = false;
-      if (timerC != 0) timerC = 0;
+      if (timerA_throw != 0) timerA_throw = 0;
+    }
+
+    if(!m_coralSensor.get() && !hasCoral) {
+      timerC_take++;
+      if (!m_coralSensor.get() && timerC_take == 25) 
+      {
+        this.hasCoral = true;
+        timerC_take = 0;
+      };
+    } else {
+      if (timerC_take != 0) timerC_take = 0;
+    }
+
+    if(m_coralSensor.get() && hasCoral) {
+      timerC_throw++;
+      if (m_coralSensor.get() && timerC_throw == 25) // periodic 20msde bir çağrılıyor, 1 saniye beklemek için 50 çağrı yapılmalı
+      {
+        this.hasCoral = false;
+        timerC_throw = 0;
+      };
+    } else {
+      if (timerC_throw != 0) timerC_throw = 0;
     }
     
     // Telemetry
     SmartDashboard.putNumber("Current Velocity", m_spark.getAbsoluteEncoder().getVelocity());
 
-    SmartDashboard.putBoolean("Has Coral?: ", this.hasCoral);
+    SmartDashboard.putBoolean("Has Coral?: ", hasCoral);
     SmartDashboard.putBoolean("Has Algae?: ", hasAlgae);
   }
 }
