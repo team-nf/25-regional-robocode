@@ -51,7 +51,7 @@ public class ArmSubsystem extends SubsystemBase {
   private final MotionMagicVoltage m_secondJointMotionMagic = new MotionMagicVoltage(0).withSlot(0);
 
   private final ArmHalfEncoder m_firstJointHalfcoder = new ArmHalfEncoder(Arm.FirstJoint.kEncoderChannel, false, false);
-  private final ArmHalfEncoder m_secondJointHalfcoder = new ArmHalfEncoder(Arm.SecondJoint.kEncoderChannel, true, true);
+  private final ArmHalfEncoder m_secondJointHalfcoder = new ArmHalfEncoder(Arm.SecondJoint.kEncoderChannel, true, false);
 
   private final DCMotor armFirstJointDC = DCMotor.getKrakenX60(1);
   private final DCMotor armSecondJointDC = DCMotor.getKrakenX60(1);

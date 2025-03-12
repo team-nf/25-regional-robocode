@@ -6,6 +6,8 @@ package frc.robot;
 
 import com.pathplanner.lib.config.PIDConstants;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 
 /**
@@ -20,13 +22,16 @@ public final class Constants {
 
   public static final double MAX_SPEED = 4.0;
 
-  public class InitialConstants {
-    public static final double[] EncoderStartAngles = {231/2,358/2};
+  public class Swerve
+  {
+
+    public static final double MaxSpeed = 0;
+    public static final double MaxAngularRate = 0;
+
   }
 
-  public static class AutonConstants {
-    public static final PIDConstants TRANSLATION_PID = new PIDConstants(0.7, 0, 0);
-    public static final PIDConstants ANGLE_PID   = new PIDConstants(0.4, 0, 0.01);
+  public class InitialConstants {
+    public static final double[] EncoderStartAngles = {264.4/2,8.7/2};
   }
 
   public static class TestingConstants {
@@ -216,9 +221,11 @@ public final class Constants {
 
   public class AutoConstants
   {
-    public static final double[] stage4Pos18R = {3.01,3.87,-0.5};
-    public static final double[] stage3Pos18R = {3.04,3.9,-0.5};
-    public static final double[] checkTagPos18 = {2.55,3.83,0};
+    public static final double[] stage4Pos18R = {2.96,3.93,0};
+    public static final double[] stage3Pos18R = {2.96,3.93,0};
+    public static final double[] stage4Pos18L = {2.98,4.28,0};
+    public static final double[] stage3Pos18L = {2.98,4.28,0};
+    public static final double[] checkTagPos18 = {2.5,4,0};
 
     public static final double[] tag1 = {16.6972, 0.6553, 1.4859, 126, 0};
     public static final double[] tag2 = {16.6972, 7.3965, 1.4859, 234, 0};
@@ -243,19 +250,33 @@ public final class Constants {
     public static final double[] tag21 = {5.3210, 4.0259, 0.3081, 0, 0};
     public static final double[] tag22 = {4.9047, 3.3063, 0.3081, 300, 0};
 
-    public static final double xOffsetS4 = stage4Pos18R[0] - tag18[0];
-    public static final double yOffsetS4 = stage4Pos18R[1] - tag18[1];
-    public static final double zRotOffsetS4 = stage4Pos18R[2] - tag18[3];
+    public static final double xOffsetS4R = stage4Pos18R[0] - tag18[0];
+    public static final double yOffsetS4R = stage4Pos18R[1] - tag18[1];
+    public static final double zRotOffsetS4R = stage4Pos18R[2] - tag18[3];
 
-    public static final double xOffsetS3 = stage3Pos18R[0] - tag18[0];
-    public static final double yOffsetS3 = stage3Pos18R[1] - tag18[1];
-    public static final double zRotOffsetS3 = stage3Pos18R[2] - tag18[3];
+    public static final double xOffsetS3R = stage3Pos18R[0] - tag18[0];
+    public static final double yOffsetS3R = stage3Pos18R[1] - tag18[1];
+    public static final double zRotOffsetS3R = stage3Pos18R[2] - tag18[3];
+
+    public static final double xOffsetS4L = stage4Pos18L[0] - tag18[0];
+    public static final double yOffsetS4L = stage4Pos18L[1] - tag18[1];
+    public static final double zRotOffsetS4L = stage4Pos18L[2] - tag18[3];
+
+    public static final double xOffsetS3L = stage3Pos18L[0] - tag18[0];
+    public static final double yOffsetS3L = stage3Pos18L[1] - tag18[1];
+    public static final double zRotOffsetS3L = stage3Pos18L[2] - tag18[3];
 
     public static final double xOffsetCT = checkTagPos18[0] - tag18[0];
     public static final double yOffsetCT = checkTagPos18[1] - tag18[1];
     public static final double zRotOffsetCT = checkTagPos18[2] - tag18[3];
 
-    public static final double LL_Accuracy = 0.025;
+    public static final Pose2d TagToRobot = new Pose2d(-xOffsetCT, -yOffsetCT, new Rotation2d(-zRotOffsetCT));
+    public static final Pose2d TagToReefPosS4R = new Pose2d(-xOffsetS4R, -yOffsetS4R, new Rotation2d(-zRotOffsetS4R));
+    public static final Pose2d TagToReefPosS3R = new Pose2d(-xOffsetS3R, -yOffsetS3R, new Rotation2d(-zRotOffsetS3R));
+    public static final Pose2d TagToReefPosS4L = new Pose2d(-xOffsetS4L, -yOffsetS4L, new Rotation2d(-zRotOffsetS4L));
+    public static final Pose2d TagToReefPosS3L = new Pose2d(-xOffsetS3L, -yOffsetS3L, new Rotation2d(-zRotOffsetS3L));
+
+    public static final double LL_Accuracy_mt1 = 0.025;
   }
 
 }

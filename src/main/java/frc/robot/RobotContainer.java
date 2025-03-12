@@ -6,18 +6,20 @@ package frc.robot;
 
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.Constants.StatePositions;
+import frc.robot.generated.TunerConstants;
 import frc.robot.sims.MainRobotMechanism;
 import frc.robot.subsystems.ArmSubsystem;
+import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.ElevatorSubsystem;
 import frc.robot.subsystems.GripperSubsystem;
 import frc.robot.subsystems.MainMechSubsystem;
-
-import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import swervelib.SwerveInputStream;
 
 import java.io.File;
 import java.util.jar.Attributes.Name;
 
+import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 
@@ -43,8 +45,6 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
  */
 public class RobotContainer {
   // The robot's subsystems and commands are defined here...
-  private final SwerveSubsystem m_drivebase = new SwerveSubsystem();
-
   private final ArmSubsystem m_armSubsystem = new ArmSubsystem();
   private final ElevatorSubsystem m_elevatorSubsystem = new ElevatorSubsystem();
   private final GripperSubsystem m_gripperSubsystem = new GripperSubsystem();
@@ -59,7 +59,15 @@ public class RobotContainer {
 
   private final SendableChooser<Integer> m_reefChooser = new SendableChooser<>();
 
+  public final CommandSwerveDrivetrain m_swerve = TunerConstants.createDrivetrain();
+  private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
+      .withDeadband(m_swerve.getMaxSpeed() * 0.06).withRotationalDeadband(m_swerve.getMaxAngularRate() * 0.06) // Add a 10% deadband
+            .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
 
+  private final boolean isAlgaeMode = false;
+
+  private final double kAngle = 0.3;
+  private final double kDrive = 0.5;
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
     // Configure the trigger bindings
@@ -79,31 +87,14 @@ public class RobotContainer {
 
     configureBindings();
 
-    double driveK = -0.3;
-    double angleK = -0.3;
 
-    SwerveInputStream driveAngularVelocity = SwerveInputStream.of(m_drivebase.getSwerveDrive(),
-                                                                () -> m_driverController.getLeftY() * m_drivebase.getDriveMultiplier(),
-                                                                () -> m_driverController.getLeftX() * m_drivebase.getDriveMultiplier())
-                                                            .withControllerRotationAxis(m_driverController::getRightX)
-                                                            .deadband(OperatorConstants.DEADBAND)
-                                                            .scaleTranslation(driveK)
-                                                            .scaleRotation(angleK)
-                                                            .allianceRelativeControl(true);
-
-    /**
-     * Clone's the angular velocity input stream and converts it to a fieldRelative input stream.
-     */
-    SwerveInputStream driveDirectAngle = driveAngularVelocity.copy()
-                                                            .withControllerHeadingAxis(m_driverController::getRightX,
-                                                                                        m_driverController::getRightY)
-                                                            .headingWhile(true);
-
-    Command driveFieldOrientedAnglularVelocity = m_drivebase.driveFieldOriented(driveAngularVelocity);
-
-    if (RobotBase.isReal()) { 
-      m_drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity);
-    }
+    m_swerve.setDefaultCommand(
+      // Drivetrain will execute this command periodically
+      m_swerve.applyRequest(() ->
+          drive.withVelocityX(-m_driverController.getLeftY() * m_swerve.getMaxSpeed() * m_swerve.getDriveMultiplier()) // Drive forward with negative Y (forward)
+              .withVelocityY(-m_driverController.getLeftX() * m_swerve.getMaxSpeed() * m_swerve.getDriveMultiplier() * kDrive) // Drive left with negative X (left)
+              .withRotationalRate(-m_driverController.getRightX() * m_swerve.getMaxAngularRate() * kAngle) // Drive counterclockwise with negative X (left)
+      ));
 
     m_reefChooser.setDefaultOption("1", 1);
     m_reefChooser.addOption("2", 2);
@@ -148,77 +139,79 @@ public class RobotContainer {
    
     /*
     m_driverController.y().whileTrue(AutoBuilder.pathfindToPose(new Pose2d(new Translation2d(3.01,3.87),
-                                                                             new Rotation2d(Units.radiansToDegrees(0))), m_drivebase.getConstraints())
+                                                                             new Rotation2d(Units.radiansToDegrees(0))), m_swerve.getConstraints())
                                                                              .andThen(NamedCommands.getCommand("CoralStage4"))
                                                                              .andThen(m_gripperSubsystem.throwCoral()));
+    */
+                                                                             /*
     m_driverController.x().whileTrue(AutoBuilder.pathfindToPose(new Pose2d(new Translation2d(3.04,3.9),
-                                                                             new Rotation2d(Units.radiansToDegrees(0))), m_drivebase.getConstraints())
+                                                                             new Rotation2d(Units.radiansToDegrees(0))), m_swerve.getConstraints())
                                                                              .andThen(NamedCommands.getCommand("CoralStage3"))
                                                                              .andThen(m_gripperSubsystem.throwCoral()));
     */
                                                                              /*
     m_driverController.y().whileTrue(AutoBuilder.pathfindToPose(new Pose2d(new Translation2d(3,4),
-                                                                             new Rotation2d(Units.radiansToDegrees(0))), m_drivebase.getConstraints()));
+                                                                             new Rotation2d(Units.radiansToDegrees(0))), m_swerve.getConstraints()));
     
     */
      
-    m_driverController.y().and(() -> {return checkCoral(17);}).whileTrue(m_drivebase.goToReef(17, true, 4)
+    m_driverController.y().and(() -> {return !isAlgaeMode;}).and(() -> {return checkCoral(17);}).whileTrue(m_swerve.goToReef(17, true, 4)
               .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.x().and(() -> {return checkCoral(17);}).whileTrue(m_drivebase.goToReef(17, true, 3)
+    m_driverController.x().and(() -> {return !isAlgaeMode;}).and(() -> {return checkCoral(17);}).whileTrue(m_swerve.goToReef(17, true, 3)
               .andThen(NamedCommands.getCommand("CoralStage3")));
-    m_driverController.a().and(() -> {return checkCoral(17);}).whileTrue(m_drivebase.goToReef(17, false, 4)
+    m_driverController.a().and(() -> {return !isAlgaeMode;}).and(() -> {return checkCoral(17);}).whileTrue(m_swerve.goToReef(17, false, 4)
               .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.b().and(() -> {return checkCoral(17);}).whileTrue(m_drivebase.goToReef(17, false, 3)
-              .andThen(NamedCommands.getCommand("CoralStage3")));
-
-    m_driverController.y().and(() -> {return checkCoral(18);}).whileTrue(m_drivebase.goToReef(18, true, 4)
-              .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.x().and(() -> {return checkCoral(18);}).whileTrue(m_drivebase.goToReef(18, true, 3)
-              .andThen(NamedCommands.getCommand("CoralStage3")));
-    m_driverController.a().and(() -> {return checkCoral(18);}).whileTrue(m_drivebase.goToReef(18, false, 4)
-              .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.b().and(() -> {return checkCoral(18);}).whileTrue(m_drivebase.goToReef(18, false, 3)
+    m_driverController.b().and(() -> {return !isAlgaeMode;}).and(() -> {return checkCoral(17);}).whileTrue(m_swerve.goToReef(17, false, 3)
               .andThen(NamedCommands.getCommand("CoralStage3")));
 
-    m_driverController.y().and(() -> {return checkCoral(19);}).whileTrue(m_drivebase.goToReef(19, true, 4)
+    m_driverController.y().and(() -> {return !isAlgaeMode;}).and(() -> {return checkCoral(18);}).whileTrue(m_swerve.goToReef(18, true, 4)
               .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.x().and(() -> {return checkCoral(19);}).whileTrue(m_drivebase.goToReef(19, true, 3)
+    m_driverController.x().and(() -> {return !isAlgaeMode;}).and(() -> {return checkCoral(18);}).whileTrue(m_swerve.goToReef(18, true, 3)
               .andThen(NamedCommands.getCommand("CoralStage3")));
-    m_driverController.a().and(() -> {return checkCoral(19);}).whileTrue(m_drivebase.goToReef(19, false, 4)
+    m_driverController.a().and(() -> {return !isAlgaeMode;}).and(() -> {return checkCoral(18);}).whileTrue(m_swerve.goToReef(18, false, 4)
               .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.b().and(() -> {return checkCoral(19);}).whileTrue(m_drivebase.goToReef(19, false, 3)
-              .andThen(NamedCommands.getCommand("CoralStage3")));
-
-    m_driverController.y().and(() -> {return checkCoral(20);}).whileTrue(m_drivebase.goToReef(20, true, 4)
-              .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.x().and(() -> {return checkCoral(20);}).whileTrue(m_drivebase.goToReef(20, true, 3)
-              .andThen(NamedCommands.getCommand("CoralStage3")));
-    m_driverController.a().and(() -> {return checkCoral(20);}).whileTrue(m_drivebase.goToReef(20, false, 4)
-              .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.b().and(() -> {return checkCoral(20);}).whileTrue(m_drivebase.goToReef(20, false, 3)
+    m_driverController.b().and(() -> {return !isAlgaeMode;}).and(() -> {return checkCoral(18);}).whileTrue(m_swerve.goToReef(18, false, 3)
               .andThen(NamedCommands.getCommand("CoralStage3")));
 
-    m_driverController.y().and(() -> {return checkCoral(21);}).whileTrue(m_drivebase.goToReef(21, true, 4)
+    m_driverController.y().and(() -> {return !isAlgaeMode;}).and(() -> {return checkCoral(19);}).whileTrue(m_swerve.goToReef(19, true, 4)
               .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.x().and(() -> {return checkCoral(21);}).whileTrue(m_drivebase.goToReef(21, true, 3)
+    m_driverController.x().and(() -> {return !isAlgaeMode;}).and(() -> {return checkCoral(19);}).whileTrue(m_swerve.goToReef(19, true, 3)
               .andThen(NamedCommands.getCommand("CoralStage3")));
-    m_driverController.a().and(() -> {return checkCoral(21);}).whileTrue(m_drivebase.goToReef(21, false, 4)
+    m_driverController.a().and(() -> {return !isAlgaeMode;}).and(() -> {return checkCoral(19);}).whileTrue(m_swerve.goToReef(19, false, 4)
               .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.b().and(() -> {return checkCoral(21);}).whileTrue(m_drivebase.goToReef(21, false, 3)
+    m_driverController.b().and(() -> {return !isAlgaeMode;}).and(() -> {return checkCoral(19);}).whileTrue(m_swerve.goToReef(19, false, 3)
               .andThen(NamedCommands.getCommand("CoralStage3")));
 
-    m_driverController.y().and(() -> {return checkCoral(22);}).whileTrue(m_drivebase.goToReef(22, true, 4)
+    m_driverController.y().and(() -> {return !isAlgaeMode;}).and(() -> {return checkCoral(20);}).whileTrue(m_swerve.goToReef(20, true, 4)
               .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.x().and(() -> {return checkCoral(22);}).whileTrue(m_drivebase.goToReef(22, true, 3)
+    m_driverController.x().and(() -> {return !isAlgaeMode;}).and(() -> {return checkCoral(20);}).whileTrue(m_swerve.goToReef(20, true, 3)
               .andThen(NamedCommands.getCommand("CoralStage3")));
-    m_driverController.a().and(() -> {return checkCoral(22);}).whileTrue(m_drivebase.goToReef(22, false, 4)
+    m_driverController.a().and(() -> {return !isAlgaeMode;}).and(() -> {return checkCoral(20);}).whileTrue(m_swerve.goToReef(20, false, 4)
               .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.b().and(() -> {return checkCoral(22);}).whileTrue(m_drivebase.goToReef(22, false, 3)
+    m_driverController.b().and(() -> {return !isAlgaeMode;}).and(() -> {return checkCoral(20);}).whileTrue(m_swerve.goToReef(20, false, 3)
+              .andThen(NamedCommands.getCommand("CoralStage3")));
+
+    m_driverController.y().and(() -> {return !isAlgaeMode;}).and(() -> {return checkCoral(21);}).whileTrue(m_swerve.goToReef(21, true, 4)
+              .andThen(NamedCommands.getCommand("CoralStage4")));
+    m_driverController.x().and(() -> {return !isAlgaeMode;}).and(() -> {return checkCoral(21);}).whileTrue(m_swerve.goToReef(21, true, 3)
+              .andThen(NamedCommands.getCommand("CoralStage3")));
+    m_driverController.a().and(() -> {return !isAlgaeMode;}).and(() -> {return checkCoral(21);}).whileTrue(m_swerve.goToReef(21, false, 4)
+              .andThen(NamedCommands.getCommand("CoralStage4")));
+    m_driverController.b().and(() -> {return !isAlgaeMode;}).and(() -> {return checkCoral(21);}).whileTrue(m_swerve.goToReef(21, false, 3)
+              .andThen(NamedCommands.getCommand("CoralStage3")));
+
+    m_driverController.y().and(() -> {return !isAlgaeMode;}).and(() -> {return checkCoral(22);}).whileTrue(m_swerve.goToReef(22, true, 4)
+              .andThen(NamedCommands.getCommand("CoralStage4")));
+    m_driverController.x().and(() -> {return !isAlgaeMode;}).and(() -> {return checkCoral(22);}).whileTrue(m_swerve.goToReef(22, true, 3)
+              .andThen(NamedCommands.getCommand("CoralStage3")));
+    m_driverController.a().and(() -> {return !isAlgaeMode;}).and(() -> {return checkCoral(22);}).whileTrue(m_swerve.goToReef(22, false, 4)
+              .andThen(NamedCommands.getCommand("CoralStage4")));
+    m_driverController.b().and(() -> {return !isAlgaeMode;}).and(() -> {return checkCoral(22);}).whileTrue(m_swerve.goToReef(22, false, 3)
               .andThen(NamedCommands.getCommand("CoralStage3")));
 
     
 
-    m_driverController.button(6).whileTrue(new RunCommand(() -> {m_drivebase.zeroGyro();}));
+    m_driverController.button(6).onTrue(m_swerve.resetHeading());
     m_driverController.button(5).onTrue(NamedCommands.getCommand("CoralIntake"));
   }
 
