@@ -4,15 +4,12 @@
 
 package frc.robot.subsystems;
 
-import javax.naming.spi.StateFactory;
-
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.Arm;
@@ -134,7 +131,7 @@ public class MainMechSubsystem extends SubsystemBase {
     {
       if(!java.util.Arrays.asList("ThrowAlgaeNet", "ThrowAlgaeProcessor", "AlgaeGround", "Algae23", "Algae34", "AlgaeFromCoral").contains(state))
       {
-        state = "AlgaeCarry";
+        state = lastState;
       }
     }
 

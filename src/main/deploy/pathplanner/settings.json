@@ -3,12 +3,15 @@
   "robotLength": 0.9,
   "holonomicMode": true,
   "pathFolders": [
-    "Auto2S4",
+    "Auto2C-Blue-Left",
+    "Auto2C-Red-Right",
+    "Auto2C-Red-Left",
+    "Auto2C-Blue-Right",
     "Pathfinding"
   ],
   "autoFolders": [],
-  "defaultMaxVel": 4.0,
-  "defaultMaxAccel": 4.0,
+  "defaultMaxVel": 2.0,
+  "defaultMaxAccel": 3.0,
   "defaultMaxAngVel": 540.0,
   "defaultMaxAngAccel": 720.0,
   "defaultNominalVoltage": 12.0,

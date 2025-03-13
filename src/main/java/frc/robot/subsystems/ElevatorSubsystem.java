@@ -26,9 +26,7 @@ import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants.Arm;
 import frc.robot.Constants.Elevator;
-import frc.robot.Constants.StatePositions;
 
 import static edu.wpi.first.units.Units.*;
 
@@ -79,6 +77,8 @@ public class ElevatorSubsystem extends SubsystemBase {
     m_talonConfig.MotionMagic.MotionMagicJerk = Elevator.kElevatorMMJ;
 
     m_talonConfig.MotorOutput.withInverted(InvertedValue.Clockwise_Positive);
+
+    m_talonConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
     // Apply configs
     StatusCode status = StatusCode.StatusCodeNotInitialized;

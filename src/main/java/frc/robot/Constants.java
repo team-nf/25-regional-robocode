@@ -4,10 +4,10 @@
 
 package frc.robot;
 
-import com.pathplanner.lib.config.PIDConstants;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.util.Units;
 
 /**
@@ -31,7 +31,7 @@ public final class Constants {
   }
 
   public class InitialConstants {
-    public static final double[] EncoderStartAngles = {264.4/2,8.7/2};
+    public static final double[] EncoderStartAngles = {264.4/2,187.5/2};
   }
 
   public static class TestingConstants {
@@ -92,8 +92,8 @@ public final class Constants {
       public static final double kArmMass = 6.5; // Kilograms
       public static final double kArmLength = 0.350;
 
-      public static final double kMinAngle = 0;
-      public static final double kMaxAngle = 360;
+      public static final double kMinAngle = 5;
+      public static final double kMaxAngle = 355;
 
       public static final double kMinAngleRads = Units.degreesToRadians(-180);        // For sim
       public static final double kMaxAngleRads = Units.degreesToRadians(180); // For sim
@@ -203,16 +203,18 @@ public final class Constants {
   public class StatePositions
   {
     // Length, Angle 1, Angle 2
+
+    public static final double angleOffset = -7;
     public static final double[] CoralStage1 = {0.25, 150, 170};      //Coral Intake
     public static final double[] CoralStage2 = {0.25, 160, 168};   //Coral Stage 1
     public static final double[] CoralStage3 = {0.51, 180, 145};    //Coral Stage 2
     public static final double[] CoralStage4 = {1.21, 180, 145};    //Coral Stage 3
-    public static final double[] CoralIntake = {0.38, 155, 340};    //Coral Stage 4
-    public static final double[] AlgaeThrowNet = {1.40, 187, 190};    //Algae Shoot
-    public static final double[] AlgaeThrowProcessor = {1.3, 187, 190};    //Algae Shoot
+    public static final double[] CoralIntake = {0.38, 155, 330};    //Coral Stage 4
+    public static final double[] AlgaeThrowNet = {1.36, 175, 180};    //Algae Shoot
+    public static final double[] AlgaeThrowProcessor = {0.09, 270, 130};    //Algae Shoot
     public static final double[] AlgaeStage23 = {0.72, 250, 150};     //Algae Stage 2-3
     public static final double[] AlgaeStage34 = {0.28, 250, 150};     //Algae Stage 3-4
-    public static final double[] AlgaeGround = {0.07, 270, 196};  //Algae Ground
+    public static final double[] AlgaeGround = {0.07, 270, 192};  //Algae Ground
     public static final double[] AlgaeFromCoral = {0.25, 270, 180};  //Algae Ground
     public static final double[] AlgaeCarry = {0.3, 180, 180};  //Algae Ground
     public static final double[] Closed = {0.15, 170, 340};  //Closed
@@ -221,11 +223,29 @@ public final class Constants {
 
   public class AutoConstants
   {
-    public static final double[] stage4Pos18R = {2.96,3.93,0};
-    public static final double[] stage3Pos18R = {2.96,3.93,0};
-    public static final double[] stage4Pos18L = {2.98,4.28,0};
-    public static final double[] stage3Pos18L = {2.98,4.28,0};
+    public static final double[] stage4Pos18R  = {2.96,3.93,0};
+    public static final double[] stage3Pos18R  = {2.96,3.93,0};
+    public static final double[] stage4Pos18L  = {2.98,4.28,0};
+    public static final double[] stage3Pos18L  = {2.98,4.28,0};
+    public static final double[] algae3Pos     = {2.98,4.11,0};
+    public static final double[] algae2Pos     = {2.98,4.11,0};
     public static final double[] checkTagPos18 = {2.5,4,0};
+
+    public static final double[] algaeNetPos14       = {2.98,4,0};
+    public static final double[] algaeProcessorPos16 = {2.98,4,0};
+    public static final double[] intakeCoralPos12    = {2.98,4,0};
+
+    public static final Pose2d stage4RPose2D  = new Pose2d(stage4Pos18R[0], stage4Pos18R[1], Rotation2d.fromDegrees(stage4Pos18R[2]));
+    public static final Pose2d stage3RPose2D  = new Pose2d(stage3Pos18R[0], stage3Pos18R[1], Rotation2d.fromDegrees(stage3Pos18R[2]));
+    public static final Pose2d stage4LPose2D  = new Pose2d(stage4Pos18L[0], stage4Pos18L[1], Rotation2d.fromDegrees(stage4Pos18L[2]));
+    public static final Pose2d stage3LPose2D  = new Pose2d(stage3Pos18L[0], stage3Pos18L[1], Rotation2d.fromDegrees(stage3Pos18L[2]));
+    public static final Pose2d algae3Pose2D   = new Pose2d(algae3Pos[0], algae3Pos[1], Rotation2d.fromDegrees(algae3Pos[2]));
+    public static final Pose2d algae2Pose2D   = new Pose2d(algae2Pos[0], algae2Pos[1], Rotation2d.fromDegrees(algae2Pos[2]));
+    public static final Pose2d checkTagPose2D = new Pose2d(checkTagPos18[0], checkTagPos18[1], Rotation2d.fromDegrees(checkTagPos18[2]));
+    
+    public static final Pose2d algaeNet14Pose2D       = new Pose2d(algaeNetPos14[0], algaeNetPos14[1], Rotation2d.fromDegrees(algaeNetPos14[2]));
+    public static final Pose2d algaeProcessor16Pose2D = new Pose2d(algaeProcessorPos16[0], algaeProcessorPos16[1], Rotation2d.fromDegrees(algaeProcessorPos16[2]));
+    public static final Pose2d intakeCoral12Pose2D    = new Pose2d(intakeCoralPos12[0], intakeCoralPos12[1], Rotation2d.fromDegrees(intakeCoralPos12[2]));
 
     public static final double[] tag1 = {16.6972, 0.6553, 1.4859, 126, 0};
     public static final double[] tag2 = {16.6972, 7.3965, 1.4859, 234, 0};
@@ -250,33 +270,24 @@ public final class Constants {
     public static final double[] tag21 = {5.3210, 4.0259, 0.3081, 0, 0};
     public static final double[] tag22 = {4.9047, 3.3063, 0.3081, 300, 0};
 
-    public static final double xOffsetS4R = stage4Pos18R[0] - tag18[0];
-    public static final double yOffsetS4R = stage4Pos18R[1] - tag18[1];
-    public static final double zRotOffsetS4R = stage4Pos18R[2] - tag18[3];
+    public static final Pose2d TAG18_POSE2D = new Pose2d(tag18[0], tag18[1], Rotation2d.fromDegrees(tag18[3]));
+    public static final Pose2d TAG16_POSE2D = new Pose2d(tag16[0], tag16[1], Rotation2d.fromDegrees(tag16[3]));
+    public static final Pose2d TAG14_POSE2D = new Pose2d(tag14[0], tag14[1], Rotation2d.fromDegrees(tag14[3]));
+    public static final Pose2d TAG12_POSE2D = new Pose2d(tag12[0], tag12[1], Rotation2d.fromDegrees(tag12[3]));
 
-    public static final double xOffsetS3R = stage3Pos18R[0] - tag18[0];
-    public static final double yOffsetS3R = stage3Pos18R[1] - tag18[1];
-    public static final double zRotOffsetS3R = stage3Pos18R[2] - tag18[3];
+    public static final Transform2d RobotPosByTag = new Transform2d(TAG18_POSE2D, checkTagPose2D);
+    public static final Transform2d ReefPosS4RByTag =  new Transform2d(TAG18_POSE2D, stage4RPose2D);
+    public static final Transform2d ReefPosS3RByTag =  new Transform2d(TAG18_POSE2D, stage3RPose2D);
+    public static final Transform2d ReefPosS4LByTag =  new Transform2d(TAG18_POSE2D, stage4LPose2D);
+    public static final Transform2d ReefPosS3LByTag =  new Transform2d(TAG18_POSE2D, stage3LPose2D);
+    public static final Transform2d Algae3ByTag =  new Transform2d(TAG18_POSE2D, algae3Pose2D);
+    public static final Transform2d Algae2ByTag =  new Transform2d(TAG18_POSE2D, algae2Pose2D);
 
-    public static final double xOffsetS4L = stage4Pos18L[0] - tag18[0];
-    public static final double yOffsetS4L = stage4Pos18L[1] - tag18[1];
-    public static final double zRotOffsetS4L = stage4Pos18L[2] - tag18[3];
+    public static final Transform2d AlgaeNetByTag =  new Transform2d(TAG14_POSE2D, algaeNet14Pose2D);
+    public static final Transform2d AlgaeProcessorByTag =  new Transform2d(TAG16_POSE2D, algaeProcessor16Pose2D);
+    public static final Transform2d IntakeCoralByTag =  new Transform2d(TAG12_POSE2D, intakeCoral12Pose2D);
 
-    public static final double xOffsetS3L = stage3Pos18L[0] - tag18[0];
-    public static final double yOffsetS3L = stage3Pos18L[1] - tag18[1];
-    public static final double zRotOffsetS3L = stage3Pos18L[2] - tag18[3];
-
-    public static final double xOffsetCT = checkTagPos18[0] - tag18[0];
-    public static final double yOffsetCT = checkTagPos18[1] - tag18[1];
-    public static final double zRotOffsetCT = checkTagPos18[2] - tag18[3];
-
-    public static final Pose2d TagToRobot = new Pose2d(-xOffsetCT, -yOffsetCT, new Rotation2d(-zRotOffsetCT));
-    public static final Pose2d TagToReefPosS4R = new Pose2d(-xOffsetS4R, -yOffsetS4R, new Rotation2d(-zRotOffsetS4R));
-    public static final Pose2d TagToReefPosS3R = new Pose2d(-xOffsetS3R, -yOffsetS3R, new Rotation2d(-zRotOffsetS3R));
-    public static final Pose2d TagToReefPosS4L = new Pose2d(-xOffsetS4L, -yOffsetS4L, new Rotation2d(-zRotOffsetS4L));
-    public static final Pose2d TagToReefPosS3L = new Pose2d(-xOffsetS3L, -yOffsetS3L, new Rotation2d(-zRotOffsetS3L));
-
-    public static final double LL_Accuracy_mt1 = 0.025;
+    public static final double LL_Accuracy_mt1 = 0.03;
   }
 
 }

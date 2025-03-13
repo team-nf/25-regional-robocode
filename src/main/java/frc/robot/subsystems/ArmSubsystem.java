@@ -6,33 +6,28 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
-import java.lang.Thread.State;
-
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.CoastOut;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
-import com.ctre.phoenix6.controls.NeutralOut;
 import com.ctre.phoenix6.controls.StaticBrake;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.PIDSubsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
 import frc.robot.Constants.Arm;
-import frc.robot.Constants.Elevator;
-import frc.robot.Constants.StatePositions;
 import frc.robot.custom.ArmHalfEncoder;
 import frc.robot.custom.ArmHalfEncoderSim;
 
@@ -41,8 +36,8 @@ public class ArmSubsystem extends SubsystemBase {
   private final TalonFX m_armFirstJointMotor = new TalonFX(Arm.FirstJoint.kMotorPort);
   private final TalonFX m_armSecondJointMotor = new TalonFX(Arm.SecondJoint.kMotorPort);
 
-  private final NeutralOut m_firstJointNeutralOut = new NeutralOut();
-  private final NeutralOut m_secondJointNeutralOut = new NeutralOut();
+  private final CoastOut m_firstJointNeutralOut = new CoastOut();
+  private final CoastOut m_secondJointNeutralOut = new CoastOut();
   private final StaticBrake m_firstJointBrake = new StaticBrake();
   private final StaticBrake m_secondJointBrake = new StaticBrake();
 
@@ -51,7 +46,7 @@ public class ArmSubsystem extends SubsystemBase {
   private final MotionMagicVoltage m_secondJointMotionMagic = new MotionMagicVoltage(0).withSlot(0);
 
   private final ArmHalfEncoder m_firstJointHalfcoder = new ArmHalfEncoder(Arm.FirstJoint.kEncoderChannel, false, false);
-  private final ArmHalfEncoder m_secondJointHalfcoder = new ArmHalfEncoder(Arm.SecondJoint.kEncoderChannel, true, false);
+  private final ArmHalfEncoder m_secondJointHalfcoder = new ArmHalfEncoder(Arm.SecondJoint.kEncoderChannel, true, true);
 
   private final DCMotor armFirstJointDC = DCMotor.getKrakenX60(1);
   private final DCMotor armSecondJointDC = DCMotor.getKrakenX60(1);
@@ -123,6 +118,7 @@ public class ArmSubsystem extends SubsystemBase {
         firstJointConfigs.MotionMagic.MotionMagicCruiseVelocity = Arm.FirstJoint.kArmJoint1_MMCV;
         firstJointConfigs.MotionMagic.MotionMagicAcceleration = Arm.FirstJoint.kArmJoint1_MMA;
         firstJointConfigs.MotionMagic.MotionMagicJerk = Arm.FirstJoint.kArmJoint1_MMJ;
+        firstJointConfigs.MotorOutput.withNeutralMode(NeutralModeValue.Brake);
         
         
         TalonFXConfiguration secondJointConfigs = new TalonFXConfiguration();
@@ -141,6 +137,7 @@ public class ArmSubsystem extends SubsystemBase {
         secondJointConfigs.MotionMagic.MotionMagicCruiseVelocity = Arm.SecondJoint.kArmJoint2_MMCV;
         secondJointConfigs.MotionMagic.MotionMagicAcceleration = Arm.SecondJoint.kArmJoint2_MMA;
         secondJointConfigs.MotionMagic.MotionMagicJerk = Arm.SecondJoint.kArmJoint2_MMJ;
+        secondJointConfigs.MotorOutput.withNeutralMode(NeutralModeValue.Brake);
 
         StatusCode statusFirstJoint = StatusCode.StatusCodeNotInitialized;
         for (int i = 0; i < 5; ++i) {
@@ -195,7 +192,7 @@ public class ArmSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("Arm/J2LastAngle", armJ2LastAngle);
 
 
-    if(RobotState.isDisabled()) NeutralOutMotors();
+    if(RobotState.isTest()) NeutralOutMotors();
     if(isInitialReady)
     {
       armJ1LastAngle = firstJointAngle;
@@ -264,7 +261,9 @@ public class ArmSubsystem extends SubsystemBase {
 
   public void reachGoal(double goalJ1, double goalJ2) 
   {
-    if(isArmReady && !isInitialReady) isInitialReady = true;
+    if(isArmReady && !isInitialReady && SmartDashboard.getNumber("Arm/J2/M-StartPos", 0) > 330 && 
+    SmartDashboard.getNumber("Arm/J1/M-StartPos", 0) > 160) 
+            isInitialReady = true;
     if(isInitialReady)
     {
       if((goalJ1 > firstJointAngle &&  goalJ1 >= armJ1limitCCW) || firstJointAngle >= armJ1limitCCW + 8)

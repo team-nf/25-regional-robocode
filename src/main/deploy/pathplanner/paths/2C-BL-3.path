@@ -3,29 +3,29 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.267107727720931,
-        "y": 2.734966178842493
+        "x": 5.572387930631778,
+        "y": 5.213500554118622
       },
       "prevControl": null,
       "nextControl": {
-        "x": 3.559981269604992,
-        "y": 3.09250502727642
+        "x": 4.936805236425489,
+        "y": 5.689076007022545
       },
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "2C-BL-2e"
     },
     {
       "anchor": {
-        "x": 3.5756748405662746,
-        "y": 3.124597291688661
+        "x": 1.5397826497807439,
+        "y": 7.23321131636779
       },
       "prevControl": {
-        "x": 3.2293958143130843,
-        "y": 2.6963382491683294
+        "x": 2.4330681818215627,
+        "y": 6.8020880681759675
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "2C-BL-3e"
     }
   ],
   "rotationTargets": [],
@@ -42,13 +42,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 49.1716244422888
+    "rotation": -54.0
   },
   "reversed": false,
-  "folder": "Pathfinding",
+  "folder": "Auto2C-Blue-Left",
   "idealStartingState": {
-    "velocity": 0,
-    "rotation": 46.45092268331217
+    "velocity": 0.0,
+    "rotation": -119.99999999999999
   },
   "useDefaultConstraints": true
 }

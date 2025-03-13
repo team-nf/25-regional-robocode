@@ -4,25 +4,30 @@
 
 package frc.robot.subsystems;
 
-import com.revrobotics.spark.SparkBase.ControlType;
-import com.revrobotics.spark.SparkBase.PersistMode;
-import com.revrobotics.spark.SparkClosedLoopController;
-import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
-import com.revrobotics.spark.config.SparkMaxConfig;
+
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.GravityTypeValue;
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants.Elevator;
 import frc.robot.Constants.GripperConstants;
+
+import static edu.wpi.first.units.Units.*;
 
 
 public class GripperSubsystem extends SubsystemBase {
- private final SparkMax m_spark = new SparkMax(GripperConstants.kGripperID, MotorType.kBrushless);
-  private SparkMaxConfig motorConfig;
-  private SparkClosedLoopController sparkPID;
+
+  private final TalonFX the_hupletici = new TalonFX(GripperConstants.kGripperID);
+
+  private TalonFXConfiguration m_talonConfig;
+
   private boolean hasAlgae = false;
   private boolean hasCoral = false;
 
@@ -30,6 +35,8 @@ public class GripperSubsystem extends SubsystemBase {
   private int timerC_take = 0;
   private int timerA_throw = 0;
   private int timerC_throw = 0;
+
+  private final int delay = 15;
 
 
   private final DigitalInput m_AlgaeSensor = new DigitalInput(GripperConstants.kAlgaeSensor);
@@ -41,41 +48,25 @@ public class GripperSubsystem extends SubsystemBase {
    */
   public GripperSubsystem() {
       // Create SparkMAX Config Object (I hate this new abundant API.)
-      motorConfig = new SparkMaxConfig();
+      m_talonConfig = new TalonFXConfiguration();
   
-      /** 
-       * Configure the encoder. We are using the encoder of NEO Vortex, therefore
-       * no config is needed, yet adjusting conversion factors is needed. 
-       */
-      motorConfig.encoder
-        //.positionConversionFactor(GripperConstants.POSITION_CONVERSION_FACTOR)
-        .velocityConversionFactor(7.2);
-      
-      /**
-       * Configure the closed loop controller. The feedback sensor is the primary encoder.
-       * The closed loop controller will be used for velocity control.
-       */
-      motorConfig.closedLoop
-        .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-        .p(GripperConstants.kGripper_kP)
-        .i(GripperConstants.kGripper_kI)
-        .d(GripperConstants.kGripper_kD)
-        .velocityFF(GripperConstants.kGripper_kV);
-        //.outputRange(GripperConstants.LOW_OUT, GripperConstants.HIGH_OUT);
-  
-      motorConfig.closedLoop.maxMotion
-      // Set MAXMotion parameters for velocity control
-        .maxAcceleration(200)
-        .maxVelocity(300)
-        .allowedClosedLoopError(5);
+      m_talonConfig.Slot0.kP = Elevator.kElevatorKp; // An error of 1 rotation results in 2.4 V output
+      m_talonConfig.Slot0.kI = Elevator.kElevatorKi; // No output for integrated error
+      m_talonConfig.Slot0.kD = Elevator.kElevatorKd; // A velocity of 1 rps results in 0.1 V output
+      m_talonConfig.Slot0.withGravityType(GravityTypeValue.Elevator_Static)
+        .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
+        .kG = Elevator.kElevatorkG;
+      m_talonConfig.Voltage.withPeakForwardVoltage(Volts.of(Elevator.kVoltageLimit))
+      .withPeakReverseVoltage(Volts.of(-Elevator.kVoltageLimit));
+      m_talonConfig.CurrentLimits.withSupplyCurrentLimit(Elevator.kAmpLimit);
 
-      motorConfig.smartCurrentLimit(39);
+      m_talonConfig.MotionMagic.MotionMagicCruiseVelocity = Elevator.kElevatorMMCV;
+      m_talonConfig.MotionMagic.MotionMagicAcceleration = Elevator.kElevatorMMA;
+      m_talonConfig.MotionMagic.MotionMagicJerk = Elevator.kElevatorMMJ;
 
-      motorConfig.idleMode(SparkMaxConfig.IdleMode.kBrake);
-  
-      // Apply the configuration to the Spark MAX
-      m_spark.configure(motorConfig, com.revrobotics.spark.SparkBase.ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-      sparkPID = m_spark.getClosedLoopController();
+      m_talonConfig.MotorOutput.withInverted(InvertedValue.Clockwise_Positive);
+
+      m_talonConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
   
     // Initialize telemetry
@@ -90,31 +81,21 @@ public class GripperSubsystem extends SubsystemBase {
   /** Used for testing */
   //public Command controlWithTriggers(double input) {return run(() -> );}
 
-  public Command controlFromDashboard() {
-    double targetVelocity = SmartDashboard.getNumber("Target Velocity", 0);
-    return run(() -> sparkPID.setReference(targetVelocity, ControlType.kMAXMotionVelocityControl));
-  }
-
-  // Maybe use motion magic?? Test first.
-
-  public Command controlFromTargetVelocity(double targetVelocity) 
-  {return run(() -> sparkPID.setReference(targetVelocity, ControlType.kMAXMotionVelocityControl));}
-
   //public Command takeAlgae() {return runEnd(() -> sparkPID.setReference(.6, ControlType.kMAXMotionVelocityControl), this::stop).until(this::hasAlgae);}
-  public Command takeAlgae() {return run(() -> m_spark.set(.6)).until(this::hasAlgae);}
+  public Command takeAlgae() {return run(() -> the_hupletici.set(.6)).until(this::hasAlgae);}
 
   //public Command takeCoral() {return runEnd(() -> sparkPID.setReference(-0.3, ControlType.kMAXMotionVelocityControl), this::stop).until(this::hasCoral);}
-  public Command takeCoral() {return runEnd(() -> m_spark.set(-0.5), this::stop).until(this::hasCoral);}
+  public Command takeCoral() {return runEnd(() -> the_hupletici.set(-0.4), this::stop).until(this::hasCoral);}
 
   //public Command throwAlgae() {return runEnd(() -> sparkPID.setReference(-0.6, ControlType.kMAXMotionVelocityControl), this::stop);}
-  public Command throwAlgae() {return runEnd(() -> m_spark.set(-0.6), this::stop).onlyWhile(this::hasAlgae);}
+  public Command throwAlgae() {return runEnd(() -> the_hupletici.set(-0.6), this::stop).onlyWhile(this::hasAlgae);}
 
   //public Command throwCoral() {return runEnd(() -> sparkPID.setReference(0.5, ControlType.kMAXMotionVelocityControl), this::stop);}
-  public Command throwCoral() {return runEnd(() -> m_spark.set(.5), this::stop).onlyWhile(this::hasCoral);}
+  public Command throwCoral() {return runEnd(() -> the_hupletici.set(.5), this::stop).onlyWhile(this::hasCoral);}
   //public Command stop() {return run(() -> sparkPID.setReference(0.03 ControlType.kMAXMotionVelocityControl));}
-  public void stop() {m_spark.stopMotor();}
+  public void stop() {the_hupletici.stopMotor();}
 
-  public Command stopCommand() {return run((() -> m_spark.stopMotor()));}
+  public Command stopCommand() {return run((() -> the_hupletici.stopMotor()));}
 
 
   @Override
@@ -126,7 +107,7 @@ public class GripperSubsystem extends SubsystemBase {
     
     if(!m_AlgaeSensor.get() && !hasAlgae) {
       timerA_take++;
-      if (!m_AlgaeSensor.get() && timerA_take == 25) // periodic 20msde bir çağrılıyor, 1 saniye beklemek için 50 çağrı yapılmalı
+      if (!m_AlgaeSensor.get() && timerA_take == delay) // periodic 20msde bir çağrılıyor, 1 saniye beklemek için 50 çağrı yapılmalı
       {
         this.hasAlgae = true;
         timerA_take = 0;
@@ -137,7 +118,7 @@ public class GripperSubsystem extends SubsystemBase {
 
     if(m_AlgaeSensor.get() && hasAlgae) {
       timerA_throw++;
-      if (m_AlgaeSensor.get() && timerA_throw == 25) // periodic 20msde bir çağrılıyor, 1 saniye beklemek için 50 çağrı yapılmalı
+      if (m_AlgaeSensor.get() && timerA_throw == delay) // periodic 20msde bir çağrılıyor, 1 saniye beklemek için 50 çağrı yapılmalı
       {
         this.hasAlgae = false;
         timerA_throw = 0;
@@ -148,7 +129,7 @@ public class GripperSubsystem extends SubsystemBase {
 
     if(!m_coralSensor.get() && !hasCoral) {
       timerC_take++;
-      if (!m_coralSensor.get() && timerC_take == 25) 
+      if (!m_coralSensor.get() && timerC_take == delay) 
       {
         this.hasCoral = true;
         timerC_take = 0;
@@ -159,7 +140,7 @@ public class GripperSubsystem extends SubsystemBase {
 
     if(m_coralSensor.get() && hasCoral) {
       timerC_throw++;
-      if (m_coralSensor.get() && timerC_throw == 25) // periodic 20msde bir çağrılıyor, 1 saniye beklemek için 50 çağrı yapılmalı
+      if (m_coralSensor.get() && timerC_throw == delay) // periodic 20msde bir çağrılıyor, 1 saniye beklemek için 50 çağrı yapılmalı
       {
         this.hasCoral = false;
         timerC_throw = 0;
@@ -169,7 +150,7 @@ public class GripperSubsystem extends SubsystemBase {
     }
     
     // Telemetry
-    SmartDashboard.putNumber("Current Velocity", m_spark.getAbsoluteEncoder().getVelocity());
+    SmartDashboard.putNumber("Current Velocity", the_hupletici.getVelocity().getValueAsDouble());
 
     SmartDashboard.putBoolean("Has Coral?: ", hasCoral);
     SmartDashboard.putBoolean("Has Algae?: ", hasAlgae);

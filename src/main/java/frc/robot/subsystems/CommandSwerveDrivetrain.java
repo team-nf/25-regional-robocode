@@ -1,6 +1,13 @@
 package frc.robot.subsystems;
 
-import static edu.wpi.first.units.Units.*;
+import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecondPerSecond;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
+import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
+import static edu.wpi.first.units.Units.Second;
+import static edu.wpi.first.units.Units.Volts;
 
 import java.util.function.Supplier;
 
@@ -24,8 +31,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
@@ -35,6 +40,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -42,7 +48,6 @@ import frc.robot.Constants.AutoConstants;
 import frc.robot.LimelightHelpers;
 import frc.robot.Robot;
 import frc.robot.Telemetry;
-import frc.robot.generated.TunerConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 
 /**
@@ -67,16 +72,16 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
     private final SwerveRequest.ApplyRobotSpeeds m_pathApplyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds();
 
-    private double MaxSpeed = MetersPerSecond.of(3).in(MetersPerSecond); //TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
-    private double MaxAngularRate = RotationsPerSecond.of(1).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
+    private double MaxSpeed = MetersPerSecond.of(4).in(MetersPerSecond); //TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
+    private double MaxAngularRate = RotationsPerSecond.of(2).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
 
     private final Telemetry logger = new Telemetry(MaxSpeed);
 
     StructPublisher<Pose3d> publisher = NetworkTableInstance.getDefault()
       .getStructTopic("3dSim/fakeRobot", Pose3d.struct).publish();
 
-    private double initialDriveMultiplier = 0.3;
-    private final double driveMultiplier = initialDriveMultiplier;
+    private final double initialDriveMultiplier = 0.4;
+    private double driveMultiplier = initialDriveMultiplier;
 
 
     /* SysId routine for characterizing translation. This is used to find PID gains for the drive motors. */
@@ -275,9 +280,15 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         if (Robot.isReal())
         {
             updateOdometryWithLL_mt2();
+            updateOdometryWithLL_mt1();
             publisher.set(new Pose3d(getState().Pose.getX(),getState().Pose.getY(),0, new Rotation3d(getState().Pose.getRotation())));
         }
         
+        if(java.util.Arrays.asList("ThrowAlgaeNet", "AlgaeGround", "Algae23", "Algae34", "CoralStage4", "CoralStage3", "CoralStage2")
+               .contains(SmartDashboard.getString("MechState", "Closed"))) driveMultiplier = initialDriveMultiplier/2;
+        else if(0 <= SmartDashboard.getNumber("Elevator/ElevatorHeight", -10) && 0.6 >= SmartDashboard.getNumber("Elevator/ElevatorHeight", -10)) 
+                driveMultiplier = initialDriveMultiplier;
+        else driveMultiplier = initialDriveMultiplier/2;
     }
 
     private void startSimThread() {
@@ -371,60 +382,104 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public PathConstraints getConstraints() {
         return new PathConstraints(
             MetersPerSecond.of(1.5).in(MetersPerSecond), MetersPerSecondPerSecond.of(1).in(MetersPerSecondPerSecond),
-            RotationsPerSecond.of(6).in(RadiansPerSecond), RotationsPerSecondPerSecond.of(3).in(RadiansPerSecondPerSecond));
+            RotationsPerSecond.of(180).in(RadiansPerSecond), RotationsPerSecondPerSecond.of(120).in(RadiansPerSecondPerSecond));
     }
 
     public Command goToReef(int id, boolean isLeft, int stage)
     {
         Pose3d aprilTagPose = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape).getTagPose(id).orElse(new Pose3d(3,3,0, new Rotation3d(0,0,0)));
         Pose2d aprilTagPose2d = new Pose2d(aprilTagPose.getX(), aprilTagPose.getY(), new Rotation2d(aprilTagPose.getRotation().getZ()));
-        Pose2d targetPose2d = new Pose2d();
+        Pose2d aprilTagTargetPose = new Pose2d();
+        Pose2d reefTargetPose2d = new Pose2d();
 
-        double x_offset = AutoConstants.xOffsetS4R;
-        double y_offset = AutoConstants.yOffsetS4R;
-        double theta_offset = AutoConstants.zRotOffsetS4R;
+        aprilTagTargetPose = aprilTagPose2d.transformBy(AutoConstants.RobotPosByTag);
 
         if(stage == 4)
         {
             if(isLeft)
             {
-                
+               reefTargetPose2d = aprilTagPose2d.transformBy(AutoConstants.ReefPosS4LByTag);
             }
             else
             {
-                x_offset = AutoConstants.xOffsetS4R;
-                y_offset = AutoConstants.yOffsetS4R;
-                theta_offset = AutoConstants.zRotOffsetS4R;
+               reefTargetPose2d = aprilTagPose2d.transformBy(AutoConstants.ReefPosS4RByTag);
             }
         }
         else if(stage == 3)
         {
             if(isLeft)
             {
-                x_offset = AutoConstants.xOffsetS3L;
-                y_offset = AutoConstants.yOffsetS3L;
-                theta_offset = AutoConstants.zRotOffsetS3L;
+                reefTargetPose2d = aprilTagPose2d.transformBy(AutoConstants.ReefPosS3LByTag);
             }
             else
             {
-                x_offset = AutoConstants.xOffsetS3R;
-                y_offset = AutoConstants.yOffsetS3R;
-                theta_offset = AutoConstants.zRotOffsetS3R;
+                reefTargetPose2d = aprilTagPose2d.transformBy(AutoConstants.ReefPosS3RByTag);
             }
         }
-        
-        double theta_tag =  aprilTagPose.getRotation().getZ() + Units.degreesToRadians(AutoConstants.zRotOffsetCT); 
 
-        double x_tag = aprilTagPose.getX() + AutoConstants.xOffsetCT*Math.cos(theta_tag) -  AutoConstants.yOffsetCT*Math.sin(theta_tag);
-        double y_tag = aprilTagPose.getY() + AutoConstants.yOffsetCT*Math.cos(theta_tag) +  AutoConstants.xOffsetCT*Math.sin(theta_tag);
+        return AutoBuilder.pathfindToPose(aprilTagTargetPose, getConstraints())
+                            .andThen(AutoBuilder.pathfindToPose(reefTargetPose2d, getConstraints()));
+    }
 
-        double theta_reef = aprilTagPose.getRotation().getZ() + Units.degreesToRadians(theta_offset);
+    public Command goToAlgae(int id, int stage)
+    {
+        Pose3d aprilTagPose = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape).getTagPose(id).orElse(new Pose3d(3,3,0, new Rotation3d(0,0,0)));
+        Pose2d aprilTagPose2d = new Pose2d(aprilTagPose.getX(), aprilTagPose.getY(), new Rotation2d(aprilTagPose.getRotation().getZ()));
+        Pose2d aprilTagTargetPose = new Pose2d();
+        Pose2d algaeTargetPose2d = new Pose2d();
 
-        double x_reef = aprilTagPose.getX() + x_offset*Math.cos(theta_reef)*0.9 - y_offset*Math.sin(theta_reef)*0.9;
-        double y_reef = aprilTagPose.getY() + y_offset*Math.cos(theta_reef)*0.9 + x_offset*Math.sin(theta_reef)*0.9;
+        aprilTagTargetPose = aprilTagPose2d.transformBy(AutoConstants.RobotPosByTag);
 
-        return AutoBuilder.pathfindToPose(new Pose2d(new Translation2d(x_tag,y_tag), new Rotation2d(theta_tag)), getConstraints())
-                            .andThen(AutoBuilder.pathfindToPose(new Pose2d(new Translation2d(x_reef,y_reef), new Rotation2d(theta_reef)), getConstraints()));
+        if(stage == 3)
+        {
+            algaeTargetPose2d = aprilTagPose2d.transformBy(AutoConstants.Algae3ByTag);
+        }
+        else if(stage == 2)
+        {
+            algaeTargetPose2d = aprilTagPose2d.transformBy(AutoConstants.Algae2ByTag);
+        }
+
+        return AutoBuilder.pathfindToPose(aprilTagTargetPose, getConstraints())
+                            .andThen(AutoBuilder.pathfindToPose(algaeTargetPose2d, getConstraints()));
+    }
+
+    public Command goToIntake(int id)
+    {
+        Pose3d aprilTagPose = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape).getTagPose(id).orElse(new Pose3d(3,3,0, new Rotation3d(0,0,0)));
+        Pose2d aprilTagPose2d = new Pose2d(aprilTagPose.getX(), aprilTagPose.getY(), new Rotation2d(aprilTagPose.getRotation().getZ()));
+        Pose2d aprilTagTargetPose = new Pose2d();
+        Pose2d algaeTargetPose2d = new Pose2d();
+
+        aprilTagTargetPose = aprilTagPose2d.transformBy(AutoConstants.RobotPosByTag);
+
+        return AutoBuilder.pathfindToPose(aprilTagTargetPose, getConstraints())
+                            .andThen(AutoBuilder.pathfindToPose(algaeTargetPose2d, getConstraints()));
+    }
+
+    public Command goToProcessor(int id)
+    {
+        Pose3d aprilTagPose = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape).getTagPose(id).orElse(new Pose3d(3,3,0, new Rotation3d(0,0,0)));
+        Pose2d aprilTagPose2d = new Pose2d(aprilTagPose.getX(), aprilTagPose.getY(), new Rotation2d(aprilTagPose.getRotation().getZ()));
+        Pose2d aprilTagTargetPose = new Pose2d();
+        Pose2d algaeTargetPose2d = new Pose2d();
+
+        aprilTagTargetPose = aprilTagPose2d.transformBy(AutoConstants.RobotPosByTag);
+
+        return AutoBuilder.pathfindToPose(aprilTagTargetPose, getConstraints())
+                            .andThen(AutoBuilder.pathfindToPose(algaeTargetPose2d, getConstraints()));
+    }
+
+    public Command goToNet(int id)
+    {
+        Pose3d aprilTagPose = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape).getTagPose(id).orElse(new Pose3d(3,3,0, new Rotation3d(0,0,0)));
+        Pose2d aprilTagPose2d = new Pose2d(aprilTagPose.getX(), aprilTagPose.getY(), new Rotation2d(aprilTagPose.getRotation().getZ()));
+        Pose2d aprilTagTargetPose = new Pose2d();
+        Pose2d algaeTargetPose2d = new Pose2d();
+
+        aprilTagTargetPose = aprilTagPose2d.transformBy(AutoConstants.RobotPosByTag);
+
+        return AutoBuilder.pathfindToPose(aprilTagTargetPose, getConstraints())
+                            .andThen(AutoBuilder.pathfindToPose(algaeTargetPose2d, getConstraints()));
     }
 
 
@@ -436,7 +491,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     
     public void updateOdometryWithLL_mt1() {
         boolean doRejectUpdate = false;
-        LimelightHelpers.PoseEstimate mt1 = LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight-a");
+        LimelightHelpers.PoseEstimate mt1 = LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight-b");
         
         if(mt1.tagCount == 1 && mt1.rawFiducials.length == 1)
         {
