@@ -195,8 +195,8 @@ public class RobotContainer {
 
     m_driverController.y().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(1, true);}).whileTrue(m_swerve.goToReef(17, true, 4)
               .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.x().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(1, true);}).whileTrue(m_swerve.goToReef(17, true, 3)
-              .andThen(NamedCommands.getCommand("CoralStage3")));
+    m_driverController.x().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(1, true);}).whileTrue((m_swerve.goToReef(17, true, 3)
+              .alongWith(NamedCommands.getCommand("CoralStage3"))));
     m_driverController.a().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(1, true);}).whileTrue(m_swerve.goToReef(17, false, 4)
               .andThen(NamedCommands.getCommand("CoralStage4")));
     m_driverController.b().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(1, true);}).whileTrue(m_swerve.goToReef(17, false, 3)
@@ -398,11 +398,11 @@ public class RobotContainer {
     // An example command will be run in autonomous
     return m_swerve.setPoseBlueAuto()
                                      .andThen(NamedCommands.getCommand("CoralCarry").withDeadline(m_swerve.goToTagAuto(20)))
-                                     .andThen(new ParallelCommandGroup(m_swerve.goToReefAuto(20, true, 4), (NamedCommands.getCommand("CoralStage4"))))
+                                     .andThen(new ParallelCommandGroup(m_swerve.goToReef(20, true, 4), (NamedCommands.getCommand("CoralStage4"))))
                                      .andThen(NamedCommands.getCommand("ThrowCoralAuto"))
                                      .andThen(new ParallelCommandGroup(NamedCommands.getCommand("CoralIntake").withDeadline(m_swerve.goToIntakeAuto(13)),NamedCommands.getCommand("TakeCoralAuto")))
                                      .andThen(NamedCommands.getCommand("CoralCarry").withDeadline(m_swerve.goToTagAuto(19)))
-                                     .andThen(new ParallelCommandGroup(m_swerve.goToReefAuto(19, false, 4), (NamedCommands.getCommand("CoralStage4"))))
+                                     .andThen(new ParallelCommandGroup(m_swerve.goToReef(19, false, 4), (NamedCommands.getCommand("CoralStage4"))))
                                      .andThen(NamedCommands.getCommand("CoralStage4"))
                                      .andThen(NamedCommands.getCommand("ThrowCoralAuto"))
                                      .andThen(NamedCommands.getCommand("CoralIntake").withDeadline(m_swerve.goToTag(19)));
@@ -413,11 +413,11 @@ public class RobotContainer {
     // An example command will be run in autonomous
     return m_swerve.setPoseRedAuto()
                                      .andThen(NamedCommands.getCommand("CoralCarry").withDeadline(m_swerve.goToTagAuto(11)))
-                                     .andThen(new ParallelCommandGroup(m_swerve.goToReefAuto(11, true, 4), (NamedCommands.getCommand("CoralStage4"))))
+                                     .andThen(new ParallelCommandGroup(m_swerve.goToReef(11, true, 4), (NamedCommands.getCommand("CoralStage4"))))
                                      .andThen(NamedCommands.getCommand("ThrowCoralAuto"))
                                      .andThen(new ParallelCommandGroup(NamedCommands.getCommand("CoralIntake").withDeadline(m_swerve.goToIntakeAuto(1)),NamedCommands.getCommand("TakeCoralAuto")))
                                      .andThen(NamedCommands.getCommand("CoralCarry").withDeadline(m_swerve.goToTagAuto(6)))
-                                     .andThen(new ParallelCommandGroup(m_swerve.goToReefAuto(6, false, 4), (NamedCommands.getCommand("CoralStage4"))))
+                                     .andThen(new ParallelCommandGroup(m_swerve.goToReef(6, false, 4), (NamedCommands.getCommand("CoralStage4"))))
                                      .andThen(NamedCommands.getCommand("CoralStage4"))
                                      .andThen(NamedCommands.getCommand("ThrowCoralAuto"))
                                      .andThen(NamedCommands.getCommand("CoralIntake").withDeadline(m_swerve.goToTag(6)));
