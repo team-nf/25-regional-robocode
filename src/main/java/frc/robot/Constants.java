@@ -31,7 +31,8 @@ public final class Constants {
   }
 
   public class InitialConstants {
-    public static final double[] EncoderStartAngles = {264.4/2,187.5/2};
+    public static final double[] EncoderStartAngles = {264.4/2,290/2};
+    // **** Second joint should be equal to 355 at zeroing position
   }
 
   public static class TestingConstants {
@@ -52,9 +53,13 @@ public final class Constants {
     public static final double kGripper_kS = 0.1;
     public static final double kGripper_kV = 0.12;
     public static final double kGripper_kPFV = 8.0;
+    public static final double kGripper_LV = 8.0;
+    public static final double kGripper_LA = 38;
 
     public static final int kAlgaeSensor = 9;
     public static final int kCoralSensor = 8;
+
+
   }
 
   public class Arm {
@@ -100,7 +105,7 @@ public final class Constants {
 
       public static final double[] kSimOffsets = {0.091,0.056,0.275};
 
-      public static final double kAngleTolerance = 0.5;
+      public static final double kAngleTolerance = 4;
       public static final double kArmSafetyFactor = 1.5;
 
     }
@@ -119,18 +124,18 @@ public final class Constants {
       public static final double kDefaultArmSetpointDegrees = 75.0;
 
       // The P gain for the PID controller that drives this arm.
-      public static final double kArmJoint2_kP = 0.6;
+      public static final double kArmJoint2_kP = 0.8;
       public static final double kArmJoint2_kI = 0.03;
       public static final double kArmJoint2_kD = 0.1;
       public static final double kArmJoint2_kS = 0.0;
       public static final double kArmJoint2_kV = 0.0;
       public static final double kArmJoint2_kA = 0.0;
-      public static final double kArmJoint2_kG = 0.05;
+      public static final double kArmJoint2_kG = 0.08;
       public static final double kArmJoint2_kPFV = 4;
       public static final double kArmJoint2_kSCL = 40;
       public static final double kArmJoint2_kSCLL = 15;
 
-      public static final int kArmJoint2_MMCV = 200; // Cruise Velocity
+      public static final int kArmJoint2_MMCV = 240; // Cruise Velocity
       public static final int kArmJoint2_MMA = 140; // Acceleration
       public static final int kArmJoint2_MMJ = 0; // Jerk
       
@@ -150,7 +155,7 @@ public final class Constants {
 
       public static final double[] kSimOffsets = {0.091,0.007,0.275};
       
-      public static final double kAngleTolerance = 0.5;
+      public static final double kAngleTolerance = 7;
       public static final double kArmSafetyFactor = 1;
     }
 
@@ -168,7 +173,7 @@ public final class Constants {
     public static final double kElevatorKi = 0;
     public static final double kElevatorKd = 0.04;
     */
-    public static final double kElevatorKp = 0.625;
+    public static final double kElevatorKp = 0.72;
     public static final double kElevatorKi = 0.04;
     public static final double kElevatorKd = 0.01;
 
@@ -178,7 +183,7 @@ public final class Constants {
     public static final double kElevatorkV = 0.0; // volt per velocity (V/(m/s))
     public static final double kElevatorkA = 0.0; // volt per acceleration (V/(m/s²))
 
-    public static final double kElevatorMMCV = 200; //12V sınır koyunca maximum 90 cıvarına çıktı zaten velocity
+    public static final double kElevatorMMCV = 230; //12V sınır koyunca maximum 90 cıvarına çıktı zaten velocity
     //+bence iki kat daha hızlı olabilir ama mümkün görünmüyor iyi bir sınır olmalı
     public static final double kElevatorMMA = 160;
     public static final double kElevatorMMJ = 0; // kullanmıyoruz
@@ -188,16 +193,16 @@ public final class Constants {
     public static final double kElevatorDistPerRotation = 0.02;
     public static final double kCarriageMass = 13.0; // kg
 
-    public static final double kAmpLimit = 40.0;
-    public static final double kVoltageLimit = 9.0;
+    public static final double kAmpLimit = 38.0;
+    public static final double kVoltageLimit = 10.0;
 
     public static final double kSetpointMeters = 0.75;
     // Encoder is reset to measure 0 at the bottom, so minimum height is 0.
     public static final double kMinElevatorHeightMeters = 0.07;
     public static final double kMaxElevatorHeightMeters = 1.45;
     public static final double kElevatorTolerance = 0.06;
-    public static final double kReadyPos = 0.2;
-    public static final double kHeightTolerance = 0.02;
+    public static final double kReadyPos = 0.12;
+    public static final double kHeightTolerance = 0.03;
   }
 
   public class StatePositions
@@ -205,35 +210,38 @@ public final class Constants {
     // Length, Angle 1, Angle 2
 
     public static final double angleOffset = -7;
-    public static final double[] CoralStage1 = {0.25, 150, 170};      //Coral Intake
-    public static final double[] CoralStage2 = {0.25, 160, 168};   //Coral Stage 1
-    public static final double[] CoralStage3 = {0.51, 180, 145};    //Coral Stage 2
-    public static final double[] CoralStage4 = {1.21, 180, 145};    //Coral Stage 3
-    public static final double[] CoralIntake = {0.38, 155, 330};    //Coral Stage 4
-    public static final double[] AlgaeThrowNet = {1.36, 175, 180};    //Algae Shoot
+    public static final double[] CoralIntake = {0.4, 160, 330};    //Coral Intake
+    public static final double[] CoralStage1 = {0.26, 150, 170};      //Coral Stage 1
+    public static final double[] CoralStage2 = {0.26, 160, 168};   //Coral Stage 2
+    public static final double[] CoralStage3 = {0.50, 180, 147};    //Coral Stage 3
+    public static final double[] CoralStage4 = {1.19, 180, 140};    //Coral Stage 4
+    public static final double[] CoralCarry = {0.32, 160, 250};    //Coral Carry
+    public static final double[] AlgaeThrowNet = {1.38, 180, 175};    //Algae Shoot
+    public static final double[] AlgaeRecoverNet = {1.38, 175, 150};    //Algae Recover After Net
     public static final double[] AlgaeThrowProcessor = {0.09, 270, 130};    //Algae Shoot
-    public static final double[] AlgaeStage23 = {0.72, 250, 150};     //Algae Stage 2-3
-    public static final double[] AlgaeStage34 = {0.28, 250, 150};     //Algae Stage 3-4
-    public static final double[] AlgaeGround = {0.07, 270, 192};  //Algae Ground
+    public static final double[] AlgaeStage23 = {0.28, 250, 150};     //Algae Stage 2-3
+    public static final double[] AlgaeStage34 = {0.72, 250, 150};     //Algae Stage 3-4
+    public static final double[] AlgaeGround = {0.07, 270, 172};  //Algae Ground
     public static final double[] AlgaeFromCoral = {0.25, 270, 180};  //Algae Ground
     public static final double[] AlgaeCarry = {0.3, 180, 180};  //Algae Ground
-    public static final double[] Closed = {0.15, 170, 340};  //Closed
-    public static final double[] FullyClosed = {0.0, 170, 340};
+    public static final double[] Closed = {0.2, 170, 340};  //Closed
+    public static final double[] FullyClosed = {0.15, 170, 340};
+
   }
 
   public class AutoConstants
   {
-    public static final double[] stage4Pos18R  = {2.96,3.93,0};
-    public static final double[] stage3Pos18R  = {2.96,3.93,0};
-    public static final double[] stage4Pos18L  = {2.98,4.28,0};
-    public static final double[] stage3Pos18L  = {2.98,4.28,0};
-    public static final double[] algae3Pos     = {2.98,4.11,0};
-    public static final double[] algae2Pos     = {2.98,4.11,0};
-    public static final double[] checkTagPos18 = {2.5,4,0};
+    public static final double[] stage4Pos18R  = {2.97,3.95,0};
+    public static final double[] stage3Pos18R  = {2.97,3.95,0};
+    public static final double[] stage4Pos18L  = {2.96,4.29,0};
+    public static final double[] stage3Pos18L  = {2.96,4.29,0};
+    public static final double[] algae3Pos     = {2.84,3.9,180};
+    public static final double[] algae2Pos     = {2.84,3.9,180};
+    public static final double[] checkTagPos18 = {2.3,4,0};
 
-    public static final double[] algaeNetPos14       = {2.98,4,0};
+    public static final double[] algaeNetPos14       = {1.5,6,0};
     public static final double[] algaeProcessorPos16 = {2.98,4,0};
-    public static final double[] intakeCoralPos12    = {2.98,4,0};
+    public static final double[] intakeCoralPos13    = {1.19,7.24,-56};
 
     public static final Pose2d stage4RPose2D  = new Pose2d(stage4Pos18R[0], stage4Pos18R[1], Rotation2d.fromDegrees(stage4Pos18R[2]));
     public static final Pose2d stage3RPose2D  = new Pose2d(stage3Pos18R[0], stage3Pos18R[1], Rotation2d.fromDegrees(stage3Pos18R[2]));
@@ -245,7 +253,7 @@ public final class Constants {
     
     public static final Pose2d algaeNet14Pose2D       = new Pose2d(algaeNetPos14[0], algaeNetPos14[1], Rotation2d.fromDegrees(algaeNetPos14[2]));
     public static final Pose2d algaeProcessor16Pose2D = new Pose2d(algaeProcessorPos16[0], algaeProcessorPos16[1], Rotation2d.fromDegrees(algaeProcessorPos16[2]));
-    public static final Pose2d intakeCoral12Pose2D    = new Pose2d(intakeCoralPos12[0], intakeCoralPos12[1], Rotation2d.fromDegrees(intakeCoralPos12[2]));
+    public static final Pose2d intakeCoral13Pose2D    = new Pose2d(intakeCoralPos13[0], intakeCoralPos13[1], Rotation2d.fromDegrees(intakeCoralPos13[2]));
 
     public static final double[] tag1 = {16.6972, 0.6553, 1.4859, 126, 0};
     public static final double[] tag2 = {16.6972, 7.3965, 1.4859, 234, 0};
@@ -273,7 +281,7 @@ public final class Constants {
     public static final Pose2d TAG18_POSE2D = new Pose2d(tag18[0], tag18[1], Rotation2d.fromDegrees(tag18[3]));
     public static final Pose2d TAG16_POSE2D = new Pose2d(tag16[0], tag16[1], Rotation2d.fromDegrees(tag16[3]));
     public static final Pose2d TAG14_POSE2D = new Pose2d(tag14[0], tag14[1], Rotation2d.fromDegrees(tag14[3]));
-    public static final Pose2d TAG12_POSE2D = new Pose2d(tag12[0], tag12[1], Rotation2d.fromDegrees(tag12[3]));
+    public static final Pose2d TAG13_POSE2D = new Pose2d(tag13[0], tag13[1], Rotation2d.fromDegrees(tag13[3]));
 
     public static final Transform2d RobotPosByTag = new Transform2d(TAG18_POSE2D, checkTagPose2D);
     public static final Transform2d ReefPosS4RByTag =  new Transform2d(TAG18_POSE2D, stage4RPose2D);
@@ -285,7 +293,7 @@ public final class Constants {
 
     public static final Transform2d AlgaeNetByTag =  new Transform2d(TAG14_POSE2D, algaeNet14Pose2D);
     public static final Transform2d AlgaeProcessorByTag =  new Transform2d(TAG16_POSE2D, algaeProcessor16Pose2D);
-    public static final Transform2d IntakeCoralByTag =  new Transform2d(TAG12_POSE2D, intakeCoral12Pose2D);
+    public static final Transform2d IntakeCoralByTag =  new Transform2d(TAG13_POSE2D, intakeCoral13Pose2D);
 
     public static final double LL_Accuracy_mt1 = 0.03;
   }

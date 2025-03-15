@@ -36,7 +36,7 @@ public class GripperSubsystem extends SubsystemBase {
   private int timerA_throw = 0;
   private int timerC_throw = 0;
 
-  private final int delay = 15;
+  private final int delay = 12;
 
 
   private final DigitalInput m_AlgaeSensor = new DigitalInput(GripperConstants.kAlgaeSensor);
@@ -50,23 +50,14 @@ public class GripperSubsystem extends SubsystemBase {
       // Create SparkMAX Config Object (I hate this new abundant API.)
       m_talonConfig = new TalonFXConfiguration();
   
-      m_talonConfig.Slot0.kP = Elevator.kElevatorKp; // An error of 1 rotation results in 2.4 V output
-      m_talonConfig.Slot0.kI = Elevator.kElevatorKi; // No output for integrated error
-      m_talonConfig.Slot0.kD = Elevator.kElevatorKd; // A velocity of 1 rps results in 0.1 V output
-      m_talonConfig.Slot0.withGravityType(GravityTypeValue.Elevator_Static)
-        .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
-        .kG = Elevator.kElevatorkG;
-      m_talonConfig.Voltage.withPeakForwardVoltage(Volts.of(Elevator.kVoltageLimit))
-      .withPeakReverseVoltage(Volts.of(-Elevator.kVoltageLimit));
-      m_talonConfig.CurrentLimits.withSupplyCurrentLimit(Elevator.kAmpLimit);
+      m_talonConfig.Slot0.kP = GripperConstants.kGripper_kP; // An error of 1 rotation results in 2.4 V output
+      m_talonConfig.Slot0.kI = GripperConstants.kGripper_kI; // No output for integrated error
+      m_talonConfig.Slot0.kD = GripperConstants.kGripper_kD; // A velocity of 1 rps results in 0.1 V output
+      m_talonConfig.Voltage.withPeakForwardVoltage(Volts.of(GripperConstants.kGripper_LV))
+      .withPeakReverseVoltage(Volts.of(-GripperConstants.kGripper_LV));
+      m_talonConfig.CurrentLimits.withSupplyCurrentLimit(GripperConstants.kGripper_LA);
 
-      m_talonConfig.MotionMagic.MotionMagicCruiseVelocity = Elevator.kElevatorMMCV;
-      m_talonConfig.MotionMagic.MotionMagicAcceleration = Elevator.kElevatorMMA;
-      m_talonConfig.MotionMagic.MotionMagicJerk = Elevator.kElevatorMMJ;
-
-      m_talonConfig.MotorOutput.withInverted(InvertedValue.Clockwise_Positive);
-
-      m_talonConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+      m_talonConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
   
     // Initialize telemetry
@@ -78,25 +69,37 @@ public class GripperSubsystem extends SubsystemBase {
 
   public boolean hasCoral() {return this.hasCoral;}
 
+  public boolean hasNotCoral() {return !this.hasCoral;}
+
+
   /** Used for testing */
   //public Command controlWithTriggers(double input) {return run(() -> );}
 
   //public Command takeAlgae() {return runEnd(() -> sparkPID.setReference(.6, ControlType.kMAXMotionVelocityControl), this::stop).until(this::hasAlgae);}
-  public Command takeAlgae() {return run(() -> the_hupletici.set(.6)).until(this::hasAlgae);}
+  public Command takeAlgae() {return run(() -> the_hupletici.set(-.2)).until(this::hasAlgae).finallyDo(() -> the_hupletici.set(-0.1));}
 
   //public Command takeCoral() {return runEnd(() -> sparkPID.setReference(-0.3, ControlType.kMAXMotionVelocityControl), this::stop).until(this::hasCoral);}
-  public Command takeCoral() {return runEnd(() -> the_hupletici.set(-0.4), this::stop).until(this::hasCoral);}
+  public Command takeCoral() {return run(() -> the_hupletici.set(0.3)).until(this::hasCoral).finallyDo(this::stop);}
 
   //public Command throwAlgae() {return runEnd(() -> sparkPID.setReference(-0.6, ControlType.kMAXMotionVelocityControl), this::stop);}
-  public Command throwAlgae() {return runEnd(() -> the_hupletici.set(-0.6), this::stop).onlyWhile(this::hasAlgae);}
+  public Command throwAlgae() {return run(() -> the_hupletici.set(0.5)).finallyDo(this::stop);}
 
   //public Command throwCoral() {return runEnd(() -> sparkPID.setReference(0.5, ControlType.kMAXMotionVelocityControl), this::stop);}
-  public Command throwCoral() {return runEnd(() -> the_hupletici.set(.5), this::stop).onlyWhile(this::hasCoral);}
+  public Command throwCoral() {return runEnd(() -> the_hupletici.set(-.4), this::stop).onlyWhile(this::hasCoral);}
   //public Command stop() {return run(() -> sparkPID.setReference(0.03 ControlType.kMAXMotionVelocityControl));}
   public void stop() {the_hupletici.stopMotor();}
 
   public Command stopCommand() {return run((() -> the_hupletici.stopMotor()));}
 
+  public Command TakeCoralAutoCommand()
+  {
+    return run(() -> the_hupletici.set(0.3)).until(this::hasCoral).finallyDo(this::stop);
+  }
+
+  public Command ThrowCoralAutoCommand()
+  {
+    return run(() -> the_hupletici.set(-0.4)).until(this::hasNotCoral).finallyDo(this::stop);
+  }
 
   @Override
   public void periodic() {

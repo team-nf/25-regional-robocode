@@ -13,16 +13,21 @@ import frc.robot.subsystems.GripperSubsystem;
 import frc.robot.subsystems.MainMechSubsystem;
 
 import java.util.Optional;
+import java.util.function.ObjDoubleConsumer;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.fasterxml.jackson.databind.util.Named;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.NamedCommands;
 
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.PS4Controller;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
@@ -41,15 +46,16 @@ public class RobotContainer {
   private final MainMechSubsystem m_mainMechSubsystem = new MainMechSubsystem(m_armSubsystem, m_elevatorSubsystem, m_gripperSubsystem);
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
-  private final CommandXboxController m_operatorController =
-      new CommandXboxController(OperatorConstants.kDriverControllerPort);
+  private final CommandPS4Controller m_operatorController =
+      new CommandPS4Controller(OperatorConstants.kDriverControllerPort);
   private final CommandXboxController m_driverController =
       new CommandXboxController(1);
 
   private final SendableChooser<Integer> m_reefChooser = new SendableChooser<>();
   private final SendableChooser<Boolean> m_isColorBlue = new SendableChooser<>();
   private final SendableChooser<Boolean> m_isAlgaeMode = new SendableChooser<>();
-  private final SendableChooser<Command> m_autoChooser = new SendableChooser<>();
+  private final SendableChooser<Integer> m_checkIntake = new SendableChooser<>();
+
 
   public final CommandSwerveDrivetrain m_swerve = TunerConstants.createDrivetrain();
   private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
@@ -62,7 +68,14 @@ public class RobotContainer {
 
 
   private final double kAngle = 0.2;
-  private final double kDrive = 0.9;
+  private final double kDrive = 0.8;
+
+  private double selectedReef = -1;
+  private boolean isBlueSelected = true;
+  private boolean isAlgaeSelected = false;
+  private double selectedReefID = -1;
+  
+
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
     // Configure the trigger bindings
@@ -79,10 +92,10 @@ public class RobotContainer {
     NamedCommands.registerCommand("Algae23", m_mainMechSubsystem.Algae23Command());
     NamedCommands.registerCommand("Algae34", m_mainMechSubsystem.Algae34Command());
     NamedCommands.registerCommand("AlgaeCarry", m_mainMechSubsystem.AlgaeCarryCommand());
+    NamedCommands.registerCommand("CoralCarry", m_mainMechSubsystem.CoralCarryCommand());
 
-    //NamedCommands.registerCommand("TakeCoralAuto", m_gripperSubsystem.TakeCoralAutoCommand());
-    //NamedCommands.registerCommand("ThrowCoralAuto", m_gripperSubsystem.ThrowCoralAutoCommand());
-
+    NamedCommands.registerCommand("TakeCoralAuto", m_gripperSubsystem.TakeCoralAutoCommand());
+    NamedCommands.registerCommand("ThrowCoralAuto", m_gripperSubsystem.ThrowCoralAutoCommand());
 
 
     configureBindings();
@@ -109,31 +122,32 @@ public class RobotContainer {
           m_isColorBlue.setDefaultOption("Red", false);
           m_isColorBlue.addOption("Blue", true);
 
-          m_autoChooser.setDefaultOption("RedAuto", getAutonomousCommandRed());
-          m_autoChooser.addOption("BlueAuto", getAutonomousCommandBlue());
         }
         if (ally.get() == Alliance.Blue) {
           m_isColorBlue.setDefaultOption("Blue", true);
           m_isColorBlue.addOption("red", false);
 
-          m_autoChooser.setDefaultOption("BlueAuto", getAutonomousCommandBlue());
-          m_autoChooser.addOption("RedAuto", getAutonomousCommandRed());
         }
     }
     else {
       m_isColorBlue.setDefaultOption("Blue", true);
-      m_isColorBlue.addOption("red", false);
-      m_autoChooser.setDefaultOption("BlueAuto", getAutonomousCommandBlue());
-      m_autoChooser.addOption("RedAuto", getAutonomousCommandRed());
+      m_isColorBlue.addOption("Red", false);
     }
 
     m_isAlgaeMode.setDefaultOption("Coral", false);
     m_isAlgaeMode.addOption("Algae", true);
 
+    m_checkIntake.setDefaultOption("1", 1);
+    m_checkIntake.setDefaultOption("2", 2);
+    m_checkIntake.setDefaultOption("12", 12);
+    m_checkIntake.setDefaultOption("13", 13);
+
     SmartDashboard.putData("ReefN", m_reefChooser);
     SmartDashboard.putData("ColorSelect", m_isColorBlue);
     SmartDashboard.putData("AlgaeMode", m_isAlgaeMode);
+    SmartDashboard.putData("IntakeSelect", m_checkIntake);
 
+    m_mainMechSubsystem.resetMechanisms();
   }
 
   /**
@@ -147,203 +161,205 @@ public class RobotContainer {
    */
   private void configureBindings() {
     // Schedule `ExampleCommand` when `exampleCondition` changes to `true`
-    m_operatorController.a().onTrue(NamedCommands.getCommand("Algae23"));
-    m_operatorController.b().onTrue(NamedCommands.getCommand("Algae34"));
-    m_operatorController.x().onTrue(NamedCommands.getCommand("AlgaeGround"));
-    m_operatorController.y().onTrue(NamedCommands.getCommand("AlgaeCarry"));
-    m_operatorController.button(5).onTrue(NamedCommands.getCommand("ThrowAlgaeProcessor"));
-    m_operatorController.button(6).onTrue(NamedCommands.getCommand("ThrowAlgaeNet"));
-    m_operatorController.button(7).onTrue(NamedCommands.getCommand("Closed"));
-    m_operatorController.button(8).onTrue(NamedCommands.getCommand("FullyClosed"));
-    m_operatorController.button(10).onTrue(NamedCommands.getCommand("Closed"));
+    m_operatorController.square().onTrue(NamedCommands.getCommand("Algae23"));
+    m_operatorController.circle().onTrue(NamedCommands.getCommand("Algae34"));
+    m_operatorController.cross().onTrue(NamedCommands.getCommand("AlgaeGround"));
+    m_operatorController.triangle().onTrue(NamedCommands.getCommand("AlgaeCarry"));
+    m_operatorController.L1().onTrue(NamedCommands.getCommand("ThrowAlgaeProcessor"));
+    m_operatorController.R1().onTrue(NamedCommands.getCommand("ThrowAlgaeNet"));
 
     //m_operatorController.button(9).onTrue(NamedCommands.getCommand("TestCommand"));
-    m_operatorController.button(9).onTrue(m_gripperSubsystem.stopCommand());
+   // m_operatorController.button(9).onTrue(m_gripperSubsystem.stopCommand());
 
-    m_driverController.pov(0).whileTrue(m_gripperSubsystem.takeAlgae());
+    m_driverController.pov(0).onTrue(m_gripperSubsystem.takeAlgae());
     m_driverController.pov(90).whileTrue(m_gripperSubsystem.throwAlgae());
-    m_driverController.pov(180).whileTrue(m_gripperSubsystem.takeCoral());
+    m_driverController.pov(180).onTrue(m_gripperSubsystem.takeCoral());
     m_driverController.pov(270).whileTrue(m_gripperSubsystem.throwCoral());
 
     m_driverController.button(8).onTrue(NamedCommands.getCommand("FullyClosed"));
     m_driverController.button(10).onTrue(NamedCommands.getCommand("Closed"));
 
     m_driverController.button(6).onTrue(m_swerve.resetHeading());
-    m_driverController.button(5).onTrue(NamedCommands.getCommand("CoralIntake"));
+    m_driverController.button(5).onTrue(NamedCommands.getCommand("CoralIntake").andThen(m_gripperSubsystem.takeCoral()));
 
-    m_driverController.leftTrigger(0.5).whileTrue(m_swerve.applyRequest(() ->
+    m_driverController.rightTrigger(0.5).whileTrue(m_swerve.applyRequest(() ->
     drivRobotCentric.withVelocityX(-m_driverController.getLeftY() * m_swerve.getMaxSpeed() * m_swerve.getDriveMultiplier()* kDrive * 0.3) // Drive forward with negative Y (forward)
         .withVelocityY(-m_driverController.getLeftX() * m_swerve.getMaxSpeed() * m_swerve.getDriveMultiplier() * kDrive * 0.3) // Drive left with negative X (left)
         .withRotationalRate(-m_driverController.getRightX() * m_swerve.getMaxAngularRate() * kAngle) // Drive counterclockwise with negative X (left)
     ));
 
-     
-    m_driverController.y().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(1, true);}).whileTrue(m_swerve.goToReef(17, true, 4)
+    m_driverController.leftTrigger(0.5).and(()-> {return checkIntake(1);}).whileTrue(m_swerve.goToIntake(1).andThen(NamedCommands.getCommand("TakeCoralAuto")));
+    m_driverController.leftTrigger(0.5).and(()-> {return checkIntake(2);}).whileTrue(m_swerve.goToIntake(2).andThen(NamedCommands.getCommand("TakeCoralAuto")));
+    m_driverController.leftTrigger(0.5).and(()-> {return checkIntake(12);}).whileTrue(m_swerve.goToIntake(12).andThen(NamedCommands.getCommand("TakeCoralAuto")));
+    m_driverController.leftTrigger(0.5).and(()-> {return checkIntake(13);}).whileTrue(m_swerve.goToIntake(13).andThen(NamedCommands.getCommand("TakeCoralAuto")));
+
+    m_driverController.y().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(1, true);}).whileTrue(m_swerve.goToReef(17, true, 4)
               .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.x().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(1, true);}).whileTrue(m_swerve.goToReef(17, true, 3)
+    m_driverController.x().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(1, true);}).whileTrue(m_swerve.goToReef(17, true, 3)
               .andThen(NamedCommands.getCommand("CoralStage3")));
-    m_driverController.a().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(1, true);}).whileTrue(m_swerve.goToReef(17, false, 4)
+    m_driverController.a().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(1, true);}).whileTrue(m_swerve.goToReef(17, false, 4)
               .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.b().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(1, true);}).whileTrue(m_swerve.goToReef(17, false, 3)
+    m_driverController.b().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(1, true);}).whileTrue(m_swerve.goToReef(17, false, 3)
               .andThen(NamedCommands.getCommand("CoralStage3")));
 
-    m_driverController.y().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(2, true);}).whileTrue(m_swerve.goToReef(18, true, 4)
+    m_driverController.y().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(2, true);}).whileTrue(m_swerve.goToReef(18, true, 4)
               .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.x().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(2, true);}).whileTrue(m_swerve.goToReef(18, true, 3)
+    m_driverController.x().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(2, true);}).whileTrue(m_swerve.goToReef(18, true, 3)
               .andThen(NamedCommands.getCommand("CoralStage3")));
-    m_driverController.a().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(2, true);}).whileTrue(m_swerve.goToReef(18, false, 4)
+    m_driverController.a().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(2, true);}).whileTrue(m_swerve.goToReef(18, false, 4)
               .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.b().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(2, true);}).whileTrue(m_swerve.goToReef(18, false, 3)
-              .andThen(NamedCommands.getCommand("CoralStage3")));
-
-    m_driverController.y().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(3, true);}).whileTrue(m_swerve.goToReef(19, true, 4)
-              .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.x().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(3, true);}).whileTrue(m_swerve.goToReef(19, true, 3)
-              .andThen(NamedCommands.getCommand("CoralStage3")));
-    m_driverController.a().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(3, true);}).whileTrue(m_swerve.goToReef(19, false, 4)
-              .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.b().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(3, true);}).whileTrue(m_swerve.goToReef(19, false, 3)
+    m_driverController.b().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(2, true);}).whileTrue(m_swerve.goToReef(18, false, 3)
               .andThen(NamedCommands.getCommand("CoralStage3")));
 
-    m_driverController.y().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(4, true);}).whileTrue(m_swerve.goToReef(20, true, 4)
+    m_driverController.y().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(3, true);}).whileTrue(m_swerve.goToReef(19, true, 4)
               .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.x().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(4, true);}).whileTrue(m_swerve.goToReef(20, true, 3)
+    m_driverController.x().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(3, true);}).whileTrue(m_swerve.goToReef(19, true, 3)
               .andThen(NamedCommands.getCommand("CoralStage3")));
-    m_driverController.a().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(4, true);}).whileTrue(m_swerve.goToReef(20, false, 4)
+    m_driverController.a().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(3, true);}).whileTrue(m_swerve.goToReef(19, false, 4)
               .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.b().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(4, true);}).whileTrue(m_swerve.goToReef(20, false, 3)
-              .andThen(NamedCommands.getCommand("CoralStage3")));
-
-    m_driverController.y().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(5, true);}).whileTrue(m_swerve.goToReef(21, true, 4)
-              .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.x().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(5, true);}).whileTrue(m_swerve.goToReef(21, true, 3)
-              .andThen(NamedCommands.getCommand("CoralStage3")));
-    m_driverController.a().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(5, true);}).whileTrue(m_swerve.goToReef(21, false, 4)
-              .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.b().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(5, true);}).whileTrue(m_swerve.goToReef(21, false, 3)
+    m_driverController.b().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(3, true);}).whileTrue(m_swerve.goToReef(19, false, 3)
               .andThen(NamedCommands.getCommand("CoralStage3")));
 
-    m_driverController.y().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(6, true);}).whileTrue(m_swerve.goToReef(22, true, 4)
+    m_driverController.y().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(4, true);}).whileTrue(m_swerve.goToReef(20, true, 4)
               .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.x().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(6, true);}).whileTrue(m_swerve.goToReef(22, true, 3)
+    m_driverController.x().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(4, true);}).whileTrue(m_swerve.goToReef(20, true, 3)
               .andThen(NamedCommands.getCommand("CoralStage3")));
-    m_driverController.a().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(6, true);}).whileTrue(m_swerve.goToReef(22, false, 4)
+    m_driverController.a().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(4, true);}).whileTrue(m_swerve.goToReef(20, false, 4)
               .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.b().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(6, true);}).whileTrue(m_swerve.goToReef(22, false, 3)
+    m_driverController.b().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(4, true);}).whileTrue(m_swerve.goToReef(20, false, 3)
               .andThen(NamedCommands.getCommand("CoralStage3")));
 
-    m_driverController.y().and(() -> {return checkAlgaeMode();}).and(() -> {return checkReef(1, true);}).whileTrue(m_swerve.goToAlgae(17, 3)
+    m_driverController.y().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(5, true);}).whileTrue(m_swerve.goToReef(21, true, 4)
+              .andThen(NamedCommands.getCommand("CoralStage4")));
+    m_driverController.x().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(5, true);}).whileTrue(m_swerve.goToReef(21, true, 3)
+              .andThen(NamedCommands.getCommand("CoralStage3")));
+    m_driverController.a().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(5, true);}).whileTrue(m_swerve.goToReef(21, false, 4)
+              .andThen(NamedCommands.getCommand("CoralStage4")));
+    m_driverController.b().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(5, true);}).whileTrue(m_swerve.goToReef(21, false, 3)
+              .andThen(NamedCommands.getCommand("CoralStage3")));
+
+    m_driverController.y().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(6, true);}).whileTrue(m_swerve.goToReef(22, true, 4)
+              .andThen(NamedCommands.getCommand("CoralStage4")));
+    m_driverController.x().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(6, true);}).whileTrue(m_swerve.goToReef(22, true, 3)
+              .andThen(NamedCommands.getCommand("CoralStage3")));
+    m_driverController.a().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(6, true);}).whileTrue(m_swerve.goToReef(22, false, 4)
+              .andThen(NamedCommands.getCommand("CoralStage4")));
+    m_driverController.b().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(6, true);}).whileTrue(m_swerve.goToReef(22, false, 3)
+              .andThen(NamedCommands.getCommand("CoralStage3")));
+    
+                /* */
+    m_driverController.y().and(() -> {return isAlgaeSelected;}).and(() -> {return checkReef(1, true);}).whileTrue(m_swerve.goToAlgae(17, 3)
           .andThen(NamedCommands.getCommand("Algae34")));
-    m_driverController.x().and(() -> {return checkAlgaeMode();}).and(() -> {return checkReef(1, true);}).whileTrue(m_swerve.goToAlgae(17, 2)
+    m_driverController.x().and(() -> {return isAlgaeSelected;}).and(() -> {return checkReef(1, true);}).whileTrue(m_swerve.goToAlgae(17, 2)
           .andThen(NamedCommands.getCommand("Algae23")));
     
-    m_driverController.y().and(() -> {return checkAlgaeMode();}).and(() -> {return checkReef(2, true);}).whileTrue(m_swerve.goToAlgae(18, 3)
+    m_driverController.y().and(() -> {return isAlgaeSelected;}).and(() -> {return checkReef(2, true);}).whileTrue(m_swerve.goToAlgae(18, 3)
           .andThen(NamedCommands.getCommand("Algae34")));
-    m_driverController.x().and(() -> {return checkAlgaeMode();}).and(() -> {return checkReef(2, true);}).whileTrue(m_swerve.goToAlgae(18, 2)
+    m_driverController.x().and(() -> {return isAlgaeSelected;}).and(() -> {return checkReef(2, true);}).whileTrue(m_swerve.goToAlgae(18, 2)
           .andThen(NamedCommands.getCommand("Algae23")));
           
-    m_driverController.y().and(() -> {return checkAlgaeMode();}).and(() -> {return checkReef(3, true);}).whileTrue(m_swerve.goToAlgae(19, 3)
+    m_driverController.y().and(() -> {return isAlgaeSelected;}).and(() -> {return checkReef(3, true);}).whileTrue(m_swerve.goToAlgae(19, 3)
           .andThen(NamedCommands.getCommand("Algae34")));
-    m_driverController.x().and(() -> {return checkAlgaeMode();}).and(() -> {return checkReef(3, true);}).whileTrue(m_swerve.goToAlgae(19, 2)
+    m_driverController.x().and(() -> {return isAlgaeSelected;}).and(() -> {return checkReef(3, true);}).whileTrue(m_swerve.goToAlgae(19, 2)
           .andThen(NamedCommands.getCommand("Algae23")));
 
-    m_driverController.y().and(() -> {return checkAlgaeMode();}).and(() -> {return checkReef(4, true);}).whileTrue(m_swerve.goToAlgae(20, 3)
+    m_driverController.y().and(() -> {return isAlgaeSelected;}).and(() -> {return checkReef(4, true);}).whileTrue(m_swerve.goToAlgae(20, 3)
           .andThen(NamedCommands.getCommand("Algae34")));
-    m_driverController.x().and(() -> {return checkAlgaeMode();}).and(() -> {return checkReef(4, true);}).whileTrue(m_swerve.goToAlgae(20, 2)
+    m_driverController.x().and(() -> {return isAlgaeSelected;}).and(() -> {return checkReef(4, true);}).whileTrue(m_swerve.goToAlgae(20, 2)
           .andThen(NamedCommands.getCommand("Algae23")));
 
-    m_driverController.y().and(() -> {return checkAlgaeMode();}).and(() -> {return checkReef(5, true);}).whileTrue(m_swerve.goToAlgae(21, 3)
+    m_driverController.y().and(() -> {return isAlgaeSelected;}).and(() -> {return checkReef(5, true);}).whileTrue(m_swerve.goToAlgae(21, 3)
           .andThen(NamedCommands.getCommand("Algae34")));
-    m_driverController.x().and(() -> {return checkAlgaeMode();}).and(() -> {return checkReef(5, true);}).whileTrue(m_swerve.goToAlgae(21, 2)
+    m_driverController.x().and(() -> {return isAlgaeSelected;}).and(() -> {return checkReef(5, true);}).whileTrue(m_swerve.goToAlgae(21, 2)
           .andThen(NamedCommands.getCommand("Algae23")));
 
-    m_driverController.y().and(() -> {return checkAlgaeMode();}).and(() -> {return checkReef(6, true);}).whileTrue(m_swerve.goToAlgae(22, 3)
+    m_driverController.y().and(() -> {return isAlgaeSelected;}).and(() -> {return checkReef(6, true);}).whileTrue(m_swerve.goToAlgae(22, 3)
           .andThen(NamedCommands.getCommand("Algae34")));
-    m_driverController.x().and(() -> {return checkAlgaeMode();}).and(() -> {return checkReef(6, true);}).whileTrue(m_swerve.goToAlgae(22, 2)
+    m_driverController.x().and(() -> {return isAlgaeSelected;}).and(() -> {return checkReef(6, true);}).whileTrue(m_swerve.goToAlgae(22, 2)
           .andThen(NamedCommands.getCommand("Algae23")));
 
-    m_driverController.y().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(1, false);}).whileTrue(m_swerve.goToReef(8, true, 4)
+    m_driverController.y().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(1, false);}).whileTrue(m_swerve.goToReef(8, true, 4)
       .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.x().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(1, false);}).whileTrue(m_swerve.goToReef(8, true, 3)
+    m_driverController.x().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(1, false);}).whileTrue(m_swerve.goToReef(8, true, 3)
       .andThen(NamedCommands.getCommand("CoralStage3")));
-    m_driverController.a().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(1, false);}).whileTrue(m_swerve.goToReef(8, false, 4)
+    m_driverController.a().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(1, false);}).whileTrue(m_swerve.goToReef(8, false, 4)
       .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.b().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(1, false);}).whileTrue(m_swerve.goToReef(6, false, 3)
-      .andThen(NamedCommands.getCommand("CoralStage3")));
-
-    m_driverController.y().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(2, false);}).whileTrue(m_swerve.goToReef(7, true, 4)
-      .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.x().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(2, false);}).whileTrue(m_swerve.goToReef(7, true, 3)
-      .andThen(NamedCommands.getCommand("CoralStage3")));
-    m_driverController.a().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(2, false);}).whileTrue(m_swerve.goToReef(7, false, 4)
-      .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.b().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(2, false);}).whileTrue(m_swerve.goToReef(7, false, 3)
+    m_driverController.b().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(1, false);}).whileTrue(m_swerve.goToReef(8, false, 3)
       .andThen(NamedCommands.getCommand("CoralStage3")));
 
-    m_driverController.y().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(3, false);}).whileTrue(m_swerve.goToReef(8, true, 4)
+    m_driverController.y().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(2, false);}).whileTrue(m_swerve.goToReef(7, true, 4)
       .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.x().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(3, false);}).whileTrue(m_swerve.goToReef(8, true, 3)
+    m_driverController.x().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(2, false);}).whileTrue(m_swerve.goToReef(7, true, 3)
       .andThen(NamedCommands.getCommand("CoralStage3")));
-    m_driverController.a().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(3, false);}).whileTrue(m_swerve.goToReef(8, false, 4)
+    m_driverController.a().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(2, false);}).whileTrue(m_swerve.goToReef(7, false, 4)
       .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.b().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(3, false);}).whileTrue(m_swerve.goToReef(8, false, 3)
-      .andThen(NamedCommands.getCommand("CoralStage3")));
-
-    m_driverController.y().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(4, false);}).whileTrue(m_swerve.goToReef(9, true, 4)
-      .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.x().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(4, false);}).whileTrue(m_swerve.goToReef(9, true, 3)
-      .andThen(NamedCommands.getCommand("CoralStage3")));
-    m_driverController.a().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(4, false);}).whileTrue(m_swerve.goToReef(9, false, 4)
-      .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.b().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(4, false);}).whileTrue(m_swerve.goToReef(9, false, 3)
+    m_driverController.b().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(2, false);}).whileTrue(m_swerve.goToReef(7, false, 3)
       .andThen(NamedCommands.getCommand("CoralStage3")));
 
-    m_driverController.y().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(5, false);}).whileTrue(m_swerve.goToReef(10, true, 4)
+    m_driverController.y().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(3, false);}).whileTrue(m_swerve.goToReef(6, true, 4)
       .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.x().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(5, false);}).whileTrue(m_swerve.goToReef(10, true, 3)
+    m_driverController.x().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(3, false);}).whileTrue(m_swerve.goToReef(6, true, 3)
       .andThen(NamedCommands.getCommand("CoralStage3")));
-    m_driverController.a().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(5, false);}).whileTrue(m_swerve.goToReef(10, false, 4)
+    m_driverController.a().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(3, false);}).whileTrue(m_swerve.goToReef(6, false, 4)
       .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.b().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(5, false);}).whileTrue(m_swerve.goToReef(10, false, 3)
-      .andThen(NamedCommands.getCommand("CoralStage3")));
-
-    m_driverController.y().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(6, false);}).whileTrue(m_swerve.goToReef(11, true, 4)
-      .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.x().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(6, false);}).whileTrue(m_swerve.goToReef(11, true, 3)
-      .andThen(NamedCommands.getCommand("CoralStage3")));
-    m_driverController.a().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(6, false);}).whileTrue(m_swerve.goToReef(11, false, 4)
-      .andThen(NamedCommands.getCommand("CoralStage4")));
-    m_driverController.b().and(() -> {return !checkAlgaeMode();}).and(() -> {return checkReef(6, false);}).whileTrue(m_swerve.goToReef(11, false, 3)
+    m_driverController.b().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(3, false);}).whileTrue(m_swerve.goToReef(6, false, 3)
       .andThen(NamedCommands.getCommand("CoralStage3")));
 
-    m_driverController.y().and(() -> {return checkAlgaeMode();}).and(() -> {return checkReef(1, false);}).whileTrue(m_swerve.goToAlgae(6, 3)
+    m_driverController.y().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(4, false);}).whileTrue(m_swerve.goToReef(11, true, 4)
+      .andThen(NamedCommands.getCommand("CoralStage4")));
+    m_driverController.x().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(4, false);}).whileTrue(m_swerve.goToReef(11, true, 3)
+      .andThen(NamedCommands.getCommand("CoralStage3")));
+    m_driverController.a().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(4, false);}).whileTrue(m_swerve.goToReef(11, false, 4)
+      .andThen(NamedCommands.getCommand("CoralStage4")));
+    m_driverController.b().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(4, false);}).whileTrue(m_swerve.goToReef(11, false, 3)
+      .andThen(NamedCommands.getCommand("CoralStage3")));
+
+    m_driverController.y().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(5, false);}).whileTrue(m_swerve.goToReef(10, true, 4)
+      .andThen(NamedCommands.getCommand("CoralStage4")));
+    m_driverController.x().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(5, false);}).whileTrue(m_swerve.goToReef(10, true, 3)
+      .andThen(NamedCommands.getCommand("CoralStage3")));
+    m_driverController.a().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(5, false);}).whileTrue(m_swerve.goToReef(10, false, 4)
+      .andThen(NamedCommands.getCommand("CoralStage4")));
+    m_driverController.b().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(5, false);}).whileTrue(m_swerve.goToReef(10, false, 3)
+      .andThen(NamedCommands.getCommand("CoralStage3")));
+
+    m_driverController.y().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(6, false);}).whileTrue(m_swerve.goToReef(9, true, 4)
+      .andThen(NamedCommands.getCommand("CoralStage4")));
+    m_driverController.x().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(6, false);}).whileTrue(m_swerve.goToReef(9, true, 3)
+      .andThen(NamedCommands.getCommand("CoralStage3")));
+    m_driverController.a().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(6, false);}).whileTrue(m_swerve.goToReef(9, false, 4)
+      .andThen(NamedCommands.getCommand("CoralStage4")));
+    m_driverController.b().and(() -> {return !isAlgaeSelected;}).and(() -> {return checkReef(6, false);}).whileTrue(m_swerve.goToReef(9, false, 3)
+      .andThen(NamedCommands.getCommand("CoralStage3")));
+
+    m_driverController.y().and(() -> {return isAlgaeSelected;}).and(() -> {return checkReef(1, false);}).whileTrue(m_swerve.goToAlgae(8, 3)
       .andThen(NamedCommands.getCommand("Algae34")));
-    m_driverController.x().and(() -> {return checkAlgaeMode();}).and(() -> {return checkReef(1, false);}).whileTrue(m_swerve.goToAlgae(6, 2)
+    m_driverController.x().and(() -> {return isAlgaeSelected;}).and(() -> {return checkReef(1, false);}).whileTrue(m_swerve.goToAlgae(8, 2)
       .andThen(NamedCommands.getCommand("Algae23")));
 
-    m_driverController.y().and(() -> {return checkAlgaeMode();}).and(() -> {return checkReef(2, false);}).whileTrue(m_swerve.goToAlgae(7, 3)
+    m_driverController.y().and(() -> {return isAlgaeSelected;}).and(() -> {return checkReef(2, false);}).whileTrue(m_swerve.goToAlgae(7, 3)
       .andThen(NamedCommands.getCommand("Algae34")));
-    m_driverController.x().and(() -> {return checkAlgaeMode();}).and(() -> {return checkReef(2, false);}).whileTrue(m_swerve.goToAlgae(7, 2)
+    m_driverController.x().and(() -> {return isAlgaeSelected;}).and(() -> {return checkReef(2, false);}).whileTrue(m_swerve.goToAlgae(7, 2)
       .andThen(NamedCommands.getCommand("Algae23")));
       
-    m_driverController.y().and(() -> {return checkAlgaeMode();}).and(() -> {return checkReef(3, false);}).whileTrue(m_swerve.goToAlgae(8, 3)
+    m_driverController.y().and(() -> {return isAlgaeSelected;}).and(() -> {return checkReef(3, false);}).whileTrue(m_swerve.goToAlgae(6, 3)
       .andThen(NamedCommands.getCommand("Algae34")));
-    m_driverController.x().and(() -> {return checkAlgaeMode();}).and(() -> {return checkReef(3, false);}).whileTrue(m_swerve.goToAlgae(8, 2)
+    m_driverController.x().and(() -> {return isAlgaeSelected;}).and(() -> {return checkReef(3, false);}).whileTrue(m_swerve.goToAlgae(6, 2)
       .andThen(NamedCommands.getCommand("Algae23")));
 
-    m_driverController.y().and(() -> {return checkAlgaeMode();}).and(() -> {return checkReef(4, false);}).whileTrue(m_swerve.goToAlgae(9, 3)
+    m_driverController.y().and(() -> {return isAlgaeSelected;}).and(() -> {return checkReef(4, false);}).whileTrue(m_swerve.goToAlgae(11, 3)
       .andThen(NamedCommands.getCommand("Algae34")));
-    m_driverController.x().and(() -> {return checkAlgaeMode();}).and(() -> {return checkReef(4, false);}).whileTrue(m_swerve.goToAlgae(9, 2)
+    m_driverController.x().and(() -> {return isAlgaeSelected;}).and(() -> {return checkReef(4, false);}).whileTrue(m_swerve.goToAlgae(11, 2)
       .andThen(NamedCommands.getCommand("Algae23")));
 
-    m_driverController.y().and(() -> {return checkAlgaeMode();}).and(() -> {return checkReef(5, false);}).whileTrue(m_swerve.goToAlgae(10, 3)
+    m_driverController.y().and(() -> {return isAlgaeSelected;}).and(() -> {return checkReef(5, false);}).whileTrue(m_swerve.goToAlgae(10, 3)
       .andThen(NamedCommands.getCommand("Algae34")));
-    m_driverController.x().and(() -> {return checkAlgaeMode();}).and(() -> {return checkReef(5, false);}).whileTrue(m_swerve.goToAlgae(10, 2)
+    m_driverController.x().and(() -> {return isAlgaeSelected;}).and(() -> {return checkReef(5, false);}).whileTrue(m_swerve.goToAlgae(10, 2)
       .andThen(NamedCommands.getCommand("Algae23")));
 
-    m_driverController.y().and(() -> {return checkAlgaeMode();}).and(() -> {return checkReef(6, false);}).whileTrue(m_swerve.goToAlgae(11, 3)
+    m_driverController.y().and(() -> {return isAlgaeSelected;}).and(() -> {return checkReef(6, false);}).whileTrue(m_swerve.goToAlgae(9, 3)
       .andThen(NamedCommands.getCommand("Algae34")));
-    m_driverController.x().and(() -> {return checkAlgaeMode();}).and(() -> {return checkReef(6, false);}).whileTrue(m_swerve.goToAlgae(11, 2)
+    m_driverController.x().and(() -> {return isAlgaeSelected;}).and(() -> {return checkReef(6, false);}).whileTrue(m_swerve.goToAlgae(9, 2)
       .andThen(NamedCommands.getCommand("Algae23")));
 
   }
@@ -362,16 +378,7 @@ public class RobotContainer {
       reefTag = 9 - reefTag;
       if(reefTag <= 5) reefTag += 6;
     }
-    return (m_reefChooser.getSelected() == reefTag);
-  }
-
-  public boolean checkAlgaeMode() {
-    return m_isAlgaeMode.getSelected();
-  }
-
-  public void resetMechanisms() {
-    m_armSubsystem.resetArmPositions();
-    m_elevatorSubsystem.resetMotorPosition();
+    return ((selectedReefID == reefTag) && (isBlueSelected == isBlue));
   }
 
   public void resetEncoders()
@@ -380,30 +387,77 @@ public class RobotContainer {
   }
 
   public void putSelectedReefID() {
-    double reefTag = m_reefChooser.getSelected();
-    boolean isBlue = m_isColorBlue.getSelected();
-    if(isBlue) reefTag += 16;
-    else
-    {
-      reefTag = 9 - reefTag;
-      if(reefTag <= 5) reefTag += 6;
-    }
-    SmartDashboard.putNumber("SelectedReefID",  reefTag);
+    SmartDashboard.putNumber("SelectedReef",  selectedReef);
+    SmartDashboard.putNumber("SelectedReefID",  selectedReefID);
+    SmartDashboard.putBoolean("IsBlueSelected", isBlueSelected);
+    SmartDashboard.putBoolean("IsAlgaeSelected", isAlgaeSelected);
   }
 
-  public Command getAutonomousCommandRed() {
-    // An example command will be run in autonomous
-    return null;
-  }
 
   public Command getAutonomousCommandBlue() { 
     // An example command will be run in autonomous
-    return null;
+    return m_swerve.setPoseBlueAuto()
+                                     .andThen(NamedCommands.getCommand("CoralCarry").withDeadline(m_swerve.goToTagAuto(20)))
+                                     .andThen(new ParallelCommandGroup(m_swerve.goToReefAuto(20, true, 4), (NamedCommands.getCommand("CoralStage4"))))
+                                     .andThen(NamedCommands.getCommand("ThrowCoralAuto"))
+                                     .andThen(new ParallelCommandGroup(NamedCommands.getCommand("CoralIntake").withDeadline(m_swerve.goToIntakeAuto(13)),NamedCommands.getCommand("TakeCoralAuto")))
+                                     .andThen(NamedCommands.getCommand("CoralCarry").withDeadline(m_swerve.goToTagAuto(19)))
+                                     .andThen(new ParallelCommandGroup(m_swerve.goToReefAuto(19, false, 4), (NamedCommands.getCommand("CoralStage4"))))
+                                     .andThen(NamedCommands.getCommand("CoralStage4"))
+                                     .andThen(NamedCommands.getCommand("ThrowCoralAuto"))
+                                     .andThen(NamedCommands.getCommand("CoralIntake").withDeadline(m_swerve.goToTag(19)));
+
+  }
+
+  public Command getAutonomousCommandRed() { 
+    // An example command will be run in autonomous
+    return m_swerve.setPoseRedAuto()
+                                     .andThen(NamedCommands.getCommand("CoralCarry").withDeadline(m_swerve.goToTagAuto(11)))
+                                     .andThen(new ParallelCommandGroup(m_swerve.goToReefAuto(11, true, 4), (NamedCommands.getCommand("CoralStage4"))))
+                                     .andThen(NamedCommands.getCommand("ThrowCoralAuto"))
+                                     .andThen(new ParallelCommandGroup(NamedCommands.getCommand("CoralIntake").withDeadline(m_swerve.goToIntakeAuto(1)),NamedCommands.getCommand("TakeCoralAuto")))
+                                     .andThen(NamedCommands.getCommand("CoralCarry").withDeadline(m_swerve.goToTagAuto(6)))
+                                     .andThen(new ParallelCommandGroup(m_swerve.goToReefAuto(6, false, 4), (NamedCommands.getCommand("CoralStage4"))))
+                                     .andThen(NamedCommands.getCommand("CoralStage4"))
+                                     .andThen(NamedCommands.getCommand("ThrowCoralAuto"))
+                                     .andThen(NamedCommands.getCommand("CoralIntake").withDeadline(m_swerve.goToTag(6)));
   }
 
   public Command getAutonomousCommand() { 
     // An example command will be run in autonomous
-    return m_autoChooser.getSelected();
+    Optional<Alliance> ally = DriverStation.getAlliance();
+    if (ally.isPresent()) {
+        if (ally.get() == Alliance.Blue) {
+          return getAutonomousCommandBlue();
+        }
+        else return getAutonomousCommandRed();
+      }
+    return null;
   }
 
+  public Command getAutoTest()
+  {
+    return NamedCommands.getCommand("CoralIntake")
+        .andThen(NamedCommands.getCommand("CoralIntake"))
+        .andThen(NamedCommands.getCommand("CoralIntake"));
+  }
+
+  public void setSelectorInfos()
+  {
+    isAlgaeSelected = m_isAlgaeMode.getSelected().booleanValue();
+    isBlueSelected = m_isColorBlue.getSelected().booleanValue();
+    selectedReef = m_reefChooser.getSelected().intValue();
+    selectedReefID = selectedReef;
+    if(isBlueSelected) selectedReefID += 16;
+    else
+    {
+      selectedReefID = 9 - selectedReefID;
+      if(selectedReefID <= 5) selectedReefID += 6;
+    }
+  }
+
+  public boolean checkIntake(int n)
+  {
+    return n == m_checkIntake.getSelected();
+  }
 }

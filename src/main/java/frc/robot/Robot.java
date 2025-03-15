@@ -20,6 +20,7 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run(); 
+    m_robotContainer.setSelectorInfos();
     m_robotContainer.putSelectedReefID();
   }
 
@@ -34,8 +35,8 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
+    //m_autonomousCommand = m_robotContainer.getAutoTest();
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
-
     if (m_autonomousCommand != null) {
       m_autonomousCommand.schedule();
     }
@@ -43,7 +44,6 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousPeriodic() {
-    m_robotContainer.resetMechanisms();
   }
 
   @Override
@@ -69,7 +69,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void testPeriodic() {
-    m_robotContainer.resetEncoders();
+    //m_robotContainer.resetEncoders();
   }
 
   @Override

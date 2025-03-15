@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -65,6 +66,8 @@ public class MainMechSubsystem extends SubsystemBase {
     CalculateArmAngleLimits();
     updateMech();
     SmartDashboard.putString("MechState", lastState);
+    SmartDashboard.putBoolean("MechGoalReached", isGoalReached);
+
   }
 
   public Command CoralIntakeCommand() {
@@ -89,6 +92,10 @@ public class MainMechSubsystem extends SubsystemBase {
 
   public Command ThrowAlgaeNetCommand() {
     return run(() -> {MechStateControl("ThrowAlgaeNet");}).until(this::isGoalReached);
+  }
+
+  public Command RecoverFromAlgaeCommand() {
+    return run(() -> {MechStateControl("RecoverFromAlgae");}).until(this::isGoalReached);
   }
 
   public Command ThrowAlgaeProcessorCommand() {
@@ -123,13 +130,20 @@ public class MainMechSubsystem extends SubsystemBase {
     return run(() -> {MechStateControl("Closed");}).until(this::isGoalReached);
   }
 
+  public Command CoralCarryCommand()
+  {
+    return run(() -> {MechStateControl("CoralCarry");}).until(this::isGoalReached);
+  }
+
   public void MechStateControl(String state) {
+    if(!RobotState.isAutonomous())
+    {
     if(lastState == "FullyClosed" && state != "Closed") state = "FullyClosed";
     else if(lastState != "Closed" && state == "FullyClosed") state = "Closed";
-
+    }
     if(m_gripperSubsystem.hasAlgae())
     {
-      if(!java.util.Arrays.asList("ThrowAlgaeNet", "ThrowAlgaeProcessor", "AlgaeGround", "Algae23", "Algae34", "AlgaeFromCoral").contains(state))
+      if(!java.util.Arrays.asList("ThrowAlgaeNet", "ThrowAlgaeProcessor", "AlgaeGround", "Algae23", "Algae34", "AlgaeFromCoral", "AlgaeCarry").contains(state))
       {
         state = lastState;
       }
@@ -140,6 +154,9 @@ public class MainMechSubsystem extends SubsystemBase {
     {
       case "CoralIntake":
         CoralIntake();
+        break;
+      case "CoralCarry":
+        CoralCarry();
         break;
       case "CoralStage1":
         CoralStage1();
@@ -171,6 +188,9 @@ public class MainMechSubsystem extends SubsystemBase {
       case "AlgaeFromCoral":
         AlgaeFromCoral();
         break;
+      case "RecoverFromNet":
+        RecoverFromNet();
+        break;
       case "AlgaeCarry":
         AlgaeCarry();
         break;
@@ -193,6 +213,11 @@ public class MainMechSubsystem extends SubsystemBase {
     isGoalReached = m_armSubsystem.isGoalReached() && m_elevatorSubsystem.isGoalReached();
   }
 
+  public void RecoverFromNet()
+  {
+
+  }
+
   public void CoralIntake() {
     reachGoal(StatePositions.CoralIntake[0], StatePositions.CoralIntake[1], StatePositions.CoralIntake[2]);
   }
@@ -211,6 +236,10 @@ public class MainMechSubsystem extends SubsystemBase {
 
   public void CoralStage4() {
     reachGoal(StatePositions.CoralStage4[0], StatePositions.CoralStage4[1], StatePositions.CoralStage4[2]);
+  }
+
+  public void CoralCarry() {
+    reachGoal(StatePositions.CoralCarry[0], StatePositions.CoralCarry[1], StatePositions.CoralCarry[2]);
   }
 
   public void ThrowAlgaeNet() {
@@ -316,6 +345,16 @@ public class MainMechSubsystem extends SubsystemBase {
     m_mechanism.update(0, armJ1Angle, armJ2Angle);
     
     fakeRobotPose.set(new Pose3d(2,2,0, new Rotation3d()));
+  }
+
+  public Command setMotorPositions()
+  {
+    return run(() -> resetMechanisms()).until(() -> m_armSubsystem.checkMotorsSet());
+  }
+
+  public void resetMechanisms() {
+    m_armSubsystem.resetArmPositions();
+    m_elevatorSubsystem.resetMotorPosition();
   }
 
 }

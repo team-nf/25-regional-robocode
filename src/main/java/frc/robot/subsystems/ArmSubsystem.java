@@ -6,6 +6,8 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
+import org.opencv.core.Mat;
+
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.CoastOut;
@@ -96,10 +98,15 @@ public class ArmSubsystem extends SubsystemBase {
   private double armJ1LastAngle = -1;
   private double armJ2LastAngle = -1;
 
+  private double armJ1MotorPos = 0;
+  private double armJ2MotorPos = 0;
+
   private boolean isJ1GoalReached = false;
   private boolean isJ2GoalReached = false;
 
   private boolean isInitialReady = false;
+
+  private boolean isMotorsSet = false;
 
   public ArmSubsystem() {
         TalonFXConfiguration firstJointConfigs = new TalonFXConfiguration();
@@ -177,7 +184,7 @@ public class ArmSubsystem extends SubsystemBase {
     if(Robot.isReal())
     {
       firstJointAngle = m_firstJointHalfcoder.getAngle();
-      secondJointAngle = m_secondJointHalfcoder.getAngle() - Math.abs(firstJointAngle-180)*Arm.SecondJoint.kPulleyErrorRatio;
+      secondJointAngle = m_secondJointHalfcoder.getAngle() - (firstJointAngle-180)*Arm.SecondJoint.kPulleyErrorRatio;
     }
 
     armJ1limitCCW = SmartDashboard.getNumber("Arm/J1-CCW-Limit", Arm.FirstJoint.kMaxAngle);
@@ -197,6 +204,19 @@ public class ArmSubsystem extends SubsystemBase {
     {
       armJ1LastAngle = firstJointAngle;
       armJ1LastAngle = secondJointAngle;
+    }
+
+    armJ1MotorPos = Units.rotationsToDegrees(m_armFirstJointMotor.getRotorPosition().getValueAsDouble())/Arm.SecondJoint.kArmReduction;
+    armJ2MotorPos = Units.rotationsToDegrees(m_armSecondJointMotor.getRotorPosition().getValueAsDouble())/Arm.SecondJoint.kArmReduction;
+
+    if(!isMotorsSet)
+    {
+    if(Math.abs(SmartDashboard.getNumber("Arm/J1/M-StartPos", 0) - m_firstJointHalfcoder.getAngle()) > 2
+        ||  Math.abs(SmartDashboard.getNumber("Arm/J2/M-StartPos", 0) - m_secondJointHalfcoder.getAngle()) > 2)
+    {
+      resetArmPositions();
+    }
+    else isMotorsSet = true;
     }
   }
 
@@ -281,11 +301,11 @@ public class ArmSubsystem extends SubsystemBase {
       m_armFirstJointMotor.setControl(m_firstJointMotionMagic.withPosition(Units.degreesToRotations(goalJ1)
       *Arm.FirstJoint.kArmReduction));
 
-      if((goalJ2 > secondJointAngle &&  goalJ2 >= armJ2limitCCW) || secondJointAngle >= armJ2limitCCW + 8)
+      if((goalJ2 > secondJointAngle &&  goalJ2 >= armJ2limitCCW) || secondJointAngle >= armJ2limitCCW + 4)
       {
         goalJ2 = armJ2limitCCW;
       }
-      else if((goalJ2 < secondJointAngle &&  goalJ2 <= armJ2limitCW) || secondJointAngle <= armJ2limitCW - 8)
+      else if((goalJ2 < secondJointAngle &&  goalJ2 <= armJ2limitCW) || secondJointAngle <= armJ2limitCW - 4)
       {
         goalJ2 = armJ2limitCW;
       }    
@@ -303,11 +323,11 @@ public class ArmSubsystem extends SubsystemBase {
 
   public void reachGoalJ1(double goalJ1)
   {
-    if((goalJ1 > firstJointAngle &&  goalJ1 >= armJ1limitCCW) || firstJointAngle >= armJ1limitCCW + 8)
+    if((goalJ1 > firstJointAngle &&  goalJ1 >= armJ1limitCCW) || firstJointAngle >= armJ1limitCCW + 4)
     {
       goalJ1 = armJ1limitCCW;
     }
-    else if((goalJ1 < firstJointAngle &&  goalJ1 <= armJ1limitCW) || firstJointAngle <= armJ1limitCW - 8)
+    else if((goalJ1 < firstJointAngle &&  goalJ1 <= armJ1limitCW) || firstJointAngle <= armJ1limitCW - 4)
     {
       goalJ1 = armJ1limitCW;
     }
@@ -321,11 +341,11 @@ public class ArmSubsystem extends SubsystemBase {
 
   public void reachGoalJ2(double goalJ2, double error)
   {
-    if((goalJ2 > secondJointAngle &&  goalJ2 >= armJ2limitCCW) || secondJointAngle >= armJ2limitCCW + 8)
+    if((goalJ2 > secondJointAngle &&  goalJ2 >= armJ2limitCCW) || secondJointAngle >= armJ2limitCCW + 4)
     {
       goalJ2 = armJ2limitCCW;
     }
-    else if((goalJ2 < secondJointAngle &&  goalJ2 <= armJ2limitCW) || secondJointAngle <= armJ2limitCW - 8)
+    else if((goalJ2 < secondJointAngle &&  goalJ2 <= armJ2limitCW) || secondJointAngle <= armJ2limitCW - 4)
     {
       goalJ2 = armJ2limitCW;
     }    
@@ -384,10 +404,13 @@ public class ArmSubsystem extends SubsystemBase {
     return secondJointAngle;
   }
 
+  
+  
   public void resetArmPositions(){
     // Units.degreesToRotations(m_firstJointHalfcoder.getAngle())*Arm.FirstJoint.kArmReduction
-    m_armFirstJointMotor.setPosition(Units.degreesToRotations(m_firstJointHalfcoder.getAngle())*Arm.FirstJoint.kArmReduction);
-    m_armSecondJointMotor.setPosition(Units.degreesToRotations(m_secondJointHalfcoder.getAngle())*Arm.SecondJoint.kArmReduction);
+    
+    m_armFirstJointMotor.setPosition(Units.degreesToRotations(getFirstJointAngle())*Arm.FirstJoint.kArmReduction);
+    m_armSecondJointMotor.setPosition(Units.degreesToRotations(getSecondJointAngle())*Arm.SecondJoint.kArmReduction);
     SmartDashboard.putNumber("Arm/J2/M-StartPos", Units.rotationsToDegrees(m_armSecondJointMotor.getRotorPosition().getValueAsDouble())/Arm.SecondJoint.kArmReduction);
     SmartDashboard.putNumber("Arm/J1/M-StartPos", Units.rotationsToDegrees(m_armFirstJointMotor.getRotorPosition().getValueAsDouble())/Arm.FirstJoint.kArmReduction);
     armJ1LastAngle = m_firstJointHalfcoder.getAngle();
@@ -404,6 +427,13 @@ public class ArmSubsystem extends SubsystemBase {
   {
     return isJ1GoalReached && isJ2GoalReached;
   }
+
+  public boolean checkMotorsSet()
+  {
+    if(!isMotorsSet) isMotorsSet = (Math.abs(m_firstJointHalfcoder.getAngle() - armJ1MotorPos)) < 2 && (Math.abs(m_secondJointHalfcoder.getAngle() - armJ2MotorPos)) < 2;
+    return isMotorsSet;
+  }
+
 }
 
 
