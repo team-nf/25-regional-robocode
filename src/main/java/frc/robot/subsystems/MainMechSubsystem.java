@@ -52,10 +52,17 @@ public class MainMechSubsystem extends SubsystemBase {
   private String lastState = "FullyClosed";
   private boolean isGoalReached = false;
 
+  private double runtimeOffset = 0;
+
   public MainMechSubsystem(ArmSubsystem armSubsystem, ElevatorSubsystem elevatorSubsystem, GripperSubsystem gripperSubsystem) {
     m_armSubsystem = armSubsystem;
     m_elevatorSubsystem = elevatorSubsystem;
     m_gripperSubsystem = gripperSubsystem;
+    
+    if (SmartDashboard.isPersistent("joint2-offset") && runtimeOffset != SmartDashboard.getNumber("joint2-offset", 0))
+    {runtimeOffset = SmartDashboard.getNumber("joint2-offset", 0);}
+    SmartDashboard.putNumber("joint2-offset", runtimeOffset);
+    SmartDashboard.setPersistent("joint2-offset");
   }
 
   @Override

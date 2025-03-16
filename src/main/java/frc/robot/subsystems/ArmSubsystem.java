@@ -108,6 +108,8 @@ public class ArmSubsystem extends SubsystemBase {
 
   private boolean isMotorsSet = false;
 
+  private double runtimeOffset = 0;
+
   public ArmSubsystem() {
         TalonFXConfiguration firstJointConfigs = new TalonFXConfiguration();
         firstJointConfigs.Slot0.kS = Arm.FirstJoint.kArmJoint1_kS;
