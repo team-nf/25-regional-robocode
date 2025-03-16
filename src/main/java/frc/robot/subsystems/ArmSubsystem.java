@@ -25,6 +25,7 @@ import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -86,6 +87,9 @@ public class ArmSubsystem extends SubsystemBase {
 
   private final TalonFXSimState m_armFirstJointMotorSim;
   private final TalonFXSimState m_armSecondJointMotorSim;
+  
+  private final SendableChooser<Integer> m_offsetChooser = new SendableChooser<>();
+
 
   private double firstJointAngle = 0;
   private double secondJointAngle = 0;
@@ -107,6 +111,8 @@ public class ArmSubsystem extends SubsystemBase {
   private boolean isInitialReady = false;
 
   private boolean isMotorsSet = false;
+
+  private double j2Offset = 0;
 
   public ArmSubsystem() {
         TalonFXConfiguration firstJointConfigs = new TalonFXConfiguration();
@@ -167,7 +173,30 @@ public class ArmSubsystem extends SubsystemBase {
         m_armFirstJointMotorSim = m_armFirstJointMotor.getSimState();
         m_armSecondJointMotorSim = m_armSecondJointMotor.getSimState();
 
-        resetArmPositions();
+        m_offsetChooser.setDefaultOption("0", 0);
+        m_offsetChooser.addOption("1", 1);
+        m_offsetChooser.addOption("2", 2);
+        m_offsetChooser.addOption("3", 3);
+        m_offsetChooser.addOption("4", 4);
+        m_offsetChooser.addOption("5", 5);
+        m_offsetChooser.addOption("6", 6);
+        m_offsetChooser.addOption("7", 7);
+        m_offsetChooser.addOption("8", 8);
+        m_offsetChooser.addOption("9", 9);
+        m_offsetChooser.addOption("10", 10);
+        m_offsetChooser.addOption("-1", -1);
+        m_offsetChooser.addOption("-2", -2);
+        m_offsetChooser.addOption("-3", -3);
+        m_offsetChooser.addOption("-4", -4);
+        m_offsetChooser.addOption("-5", -5);
+        m_offsetChooser.addOption("-6", -6);
+        m_offsetChooser.addOption("-7", -7);
+        m_offsetChooser.addOption("-8", -8);
+        m_offsetChooser.addOption("-9", -9);
+        m_offsetChooser.addOption("-10", -10);
+        SmartDashboard.putData("Arm/J2OffsetChooser", m_offsetChooser);
+        SmartDashboard.setPersistent("Arm/J2OffsetCooser");
+        resetArmPositions();        
   }
 
   @Override
@@ -218,6 +247,19 @@ public class ArmSubsystem extends SubsystemBase {
     }
     else isMotorsSet = true;
     }
+
+
+    if (m_offsetChooser.getSelected() < 10 && m_offsetChooser.getSelected() > -10) {
+    if (m_offsetChooser != null) {
+    j2Offset = m_offsetChooser.getSelected()*6; 
+    } else j2Offset = 0;
+  } else {
+    if (m_offsetChooser.getSelected() > 10) j2Offset = 60;
+    if (m_offsetChooser.getSelected() < -10) j2Offset = -60;
+  }
+
+
+
   }
 
   @Override
@@ -314,7 +356,7 @@ public class ArmSubsystem extends SubsystemBase {
   
       isJ2GoalReached = (Math.abs(secondJointAngle - goalJ2) < Arm.SecondJoint.kAngleTolerance);
   
-      m_armSecondJointMotor.setControl(m_secondJointMotionMagic.withPosition(Units.degreesToRotations(goalJ2 + (goalJ1-180)*Arm.SecondJoint.kPulleyErrorRatio)
+      m_armSecondJointMotor.setControl(m_secondJointMotionMagic.withPosition(Units.degreesToRotations(goalJ2 + (goalJ1-180)*Arm.SecondJoint.kPulleyErrorRatio + j2Offset)
       *Arm.SecondJoint.kArmReduction));
     }
     else brakeMotors();  
@@ -432,6 +474,16 @@ public class ArmSubsystem extends SubsystemBase {
   {
     if(!isMotorsSet) isMotorsSet = (Math.abs(m_firstJointHalfcoder.getAngle() - armJ1MotorPos)) < 2 && (Math.abs(m_secondJointHalfcoder.getAngle() - armJ2MotorPos)) < 2;
     return isMotorsSet;
+  }
+
+  public double getJ2Offset()
+  {
+    return j2Offset;
+  }
+
+  public void setJ2Offset(double offset)
+  {
+    j2Offset = offset;
   }
 
 }

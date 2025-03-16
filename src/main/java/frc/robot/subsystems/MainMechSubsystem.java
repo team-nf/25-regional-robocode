@@ -141,6 +141,9 @@ public class MainMechSubsystem extends SubsystemBase {
     if(lastState == "FullyClosed" && state != "Closed") state = "FullyClosed";
     else if(lastState != "Closed" && state == "FullyClosed") state = "Closed";
     }
+
+    if(lastState == "ThrowAlgaeNet" && state != "ThrowAlgaeNet") state = "AlgaeCarry";
+
     if(m_gripperSubsystem.hasAlgae())
     {
       if(!java.util.Arrays.asList("ThrowAlgaeNet", "ThrowAlgaeProcessor", "AlgaeGround", "Algae23", "Algae34", "AlgaeFromCoral", "AlgaeCarry").contains(state))
@@ -201,7 +204,7 @@ public class MainMechSubsystem extends SubsystemBase {
         Closed();
         break;
       default:
-        Closed();
+        AlgaeCarry();
         break;
     }
   }

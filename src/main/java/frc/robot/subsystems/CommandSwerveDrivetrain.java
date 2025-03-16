@@ -80,8 +80,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     StructPublisher<Pose3d> publisher = NetworkTableInstance.getDefault()
       .getStructTopic("3dSim/fakeRobot", Pose3d.struct).publish();
 
-    private final double initialDriveMultiplier = 0.48;
+    private final double initialDriveMultiplier = 0.52;
     private double driveMultiplier = initialDriveMultiplier;
+
+    private final Pose2d blueNetPose2d = new Pose2d(7.6, 6.5, new Rotation2d(Units.degreesToRadians(180)));
+    private final Pose2d redNetPose2d = new Pose2d(10, 2, new Rotation2d(0));
 
 
     /* SysId routine for characterizing translation. This is used to find PID gains for the drive motors. */
@@ -283,9 +286,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             //updateOdometryWithLL_mt1();
             publisher.set(new Pose3d(getState().Pose.getX(),getState().Pose.getY(),0, new Rotation3d(getState().Pose.getRotation())));
         }
-        
-        if(java.util.Arrays.asList("ThrowAlgaeNet", "AlgaeGround", "Algae23", "Algae34", "CoralStage4", "CoralStage3", "CoralStage2")
-               .contains(SmartDashboard.getString("MechState", "Closed"))) driveMultiplier = initialDriveMultiplier/2;
+        String stat = SmartDashboard.getString("MechState", "Closed");
+        if(java.util.Arrays.asList("ThrowAlgaeNet", "CoralStage4", "CoralStage3", "CoralStage2")
+               .contains(stat)) driveMultiplier = initialDriveMultiplier/2;
+        else if (stat == "Algae23" || stat == "Algae34") driveMultiplier = initialDriveMultiplier/1.2;
         else if(0 <= SmartDashboard.getNumber("Elevator/ElevatorHeight", -10) && 0.6 >= SmartDashboard.getNumber("Elevator/ElevatorHeight", -10)) 
                 driveMultiplier = initialDriveMultiplier;
         else driveMultiplier = initialDriveMultiplier/2;
@@ -381,13 +385,13 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     public PathConstraints getConstraints() {
         return new PathConstraints(
-            MetersPerSecond.of(3.3).in(MetersPerSecond), MetersPerSecondPerSecond.of(2).in(MetersPerSecondPerSecond),
+            MetersPerSecond.of(3.6).in(MetersPerSecond), MetersPerSecondPerSecond.of(2.25).in(MetersPerSecondPerSecond),
             RotationsPerSecond.of(180).in(RadiansPerSecond), RotationsPerSecondPerSecond.of(120).in(RadiansPerSecondPerSecond));
     }
 
     public PathConstraints getConstraintsForAuto() {
         return new PathConstraints(
-            MetersPerSecond.of(3.8).in(MetersPerSecond), MetersPerSecondPerSecond.of(2.25).in(MetersPerSecondPerSecond),
+            MetersPerSecond.of(3.8).in(MetersPerSecond), MetersPerSecondPerSecond.of(2.35).in(MetersPerSecondPerSecond),
             RotationsPerSecond.of(180).in(RadiansPerSecond), RotationsPerSecondPerSecond.of(120).in(RadiansPerSecondPerSecond));
     }
 
@@ -558,12 +562,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
 
-    public Command getAutonomousCommand(String pathName)
-    {
-        // Create a path following command using AutoBuilder. This will also trigger event markers.
-        return new PathPlannerAuto(pathName);
-    }
-
     public Command goToTag(int id)
     {
         Pose3d aprilTagPose = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape).getTagPose(id).orElse(new Pose3d(3,3,0, new Rotation3d(0,0,0)));
@@ -652,5 +650,16 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public Command setPoseRedAuto()
     {
         return runOnce(() -> resetPose(new Pose2d(10.37, 0.56, new Rotation2d(Units.degreesToRadians(90)))));
+    }
+
+    public Command goToBlueNet()
+    {
+        return AutoBuilder.pathfindToPose(blueNetPose2d, getConstraints());
+    }
+
+
+    public Command goToRedNet()
+    {
+        return AutoBuilder.pathfindToPose(redNetPose2d, getConstraints());
     }
 }

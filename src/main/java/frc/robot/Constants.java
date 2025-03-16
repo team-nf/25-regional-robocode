@@ -31,7 +31,7 @@ public final class Constants {
   }
 
   public class InitialConstants {
-    public static final double[] EncoderStartAngles = {264.4/2,280/2};
+    public static final double[] EncoderStartAngles = {264.4/2,168/2};
     // **** Second joint should be equal to 355 at zeroing position
   }
 
@@ -155,7 +155,7 @@ public final class Constants {
 
       public static final double[] kSimOffsets = {0.091,0.007,0.275};
       
-      public static final double kAngleTolerance = 7;
+      public static final double kAngleTolerance = 4;
       public static final double kArmSafetyFactor = 1;
     }
 
@@ -198,11 +198,10 @@ public final class Constants {
 
     public static final double kSetpointMeters = 0.75;
     // Encoder is reset to measure 0 at the bottom, so minimum height is 0.
-    public static final double kMinElevatorHeightMeters = 0.07;
+    public static final double kMinElevatorHeightMeters = 0.045;
     public static final double kMaxElevatorHeightMeters = 1.45;
-    public static final double kElevatorTolerance = 0.06;
+    public static final double kElevatorTolerance = 0.03;
     public static final double kReadyPos = 0.12;
-    public static final double kHeightTolerance = 0.03;
   }
 
   public class StatePositions
@@ -221,7 +220,7 @@ public final class Constants {
     public static final double[] AlgaeThrowProcessor = {0.09, 270, 130};    //Algae Shoot
     public static final double[] AlgaeStage23 = {0.28, 250, 150};     //Algae Stage 2-3
     public static final double[] AlgaeStage34 = {0.72, 250, 150};     //Algae Stage 3-4
-    public static final double[] AlgaeGround = {0.07, 270, 172};  //Algae Ground
+    public static final double[] AlgaeGround = {0.005, 216, 263};  //Algae Ground
     public static final double[] AlgaeFromCoral = {0.25, 270, 180};  //Algae Ground
     public static final double[] AlgaeCarry = {0.3, 180, 180};  //Algae Ground
     public static final double[] Closed = {0.2, 170, 340};  //Closed
