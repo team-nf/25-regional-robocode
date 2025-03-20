@@ -187,7 +187,7 @@ public class RobotContainer {
     m_driverController.button(7).and(() -> checkTeam(false)).whileTrue(m_swerve.goToRedNet());
 
     m_driverController.rightTrigger(0.5).whileTrue(m_swerve.applyRequest(() ->
-    drivRobotCentric.withVelocityX(-m_driverController.getLeftY() * m_swerve.getMaxSpeed() * m_swerve.getDriveMultiplier()* kDrive * 0.3) // Drive forward with negative Y (forward)
+    drivRobotCentric.withVelocityX(m_driverController.getLeftY() * m_swerve.getMaxSpeed() * m_swerve.getDriveMultiplier()* kDrive * 0.3) // Drive forward with negative Y (forward)
         .withVelocityY(-m_driverController.getLeftX() * m_swerve.getMaxSpeed() * m_swerve.getDriveMultiplier() * kDrive * 0.3) // Drive left with negative X (left)
         .withRotationalRate(-m_driverController.getRightX() * m_swerve.getMaxAngularRate() * kAngle) // Drive counterclockwise with negative X (left)
     ));

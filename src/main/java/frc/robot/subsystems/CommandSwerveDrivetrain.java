@@ -289,7 +289,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         String stat = SmartDashboard.getString("MechState", "Closed");
         if(java.util.Arrays.asList("ThrowAlgaeNet", "CoralStage4", "CoralStage3", "CoralStage2")
                .contains(stat)) driveMultiplier = initialDriveMultiplier/2;
-        else if (stat == "Algae23" || stat == "Algae34") driveMultiplier = initialDriveMultiplier/1.2;
+        else if (stat == "Algae23" || stat == "Algae34") driveMultiplier = initialDriveMultiplier/1.1;
         else if(0 <= SmartDashboard.getNumber("Elevator/ElevatorHeight", -10) && 0.6 >= SmartDashboard.getNumber("Elevator/ElevatorHeight", -10)) 
                 driveMultiplier = initialDriveMultiplier;
         else driveMultiplier = initialDriveMultiplier/2;
@@ -385,13 +385,13 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     public PathConstraints getConstraints() {
         return new PathConstraints(
-            MetersPerSecond.of(3.6).in(MetersPerSecond), MetersPerSecondPerSecond.of(2.25).in(MetersPerSecondPerSecond),
+            MetersPerSecond.of(3.6).in(MetersPerSecond), MetersPerSecondPerSecond.of(2.2).in(MetersPerSecondPerSecond),
             RotationsPerSecond.of(180).in(RadiansPerSecond), RotationsPerSecondPerSecond.of(120).in(RadiansPerSecondPerSecond));
     }
 
     public PathConstraints getConstraintsForAuto() {
         return new PathConstraints(
-            MetersPerSecond.of(3.8).in(MetersPerSecond), MetersPerSecondPerSecond.of(2.35).in(MetersPerSecondPerSecond),
+            MetersPerSecond.of(3.8).in(MetersPerSecond), MetersPerSecondPerSecond.of(2.3).in(MetersPerSecondPerSecond),
             RotationsPerSecond.of(180).in(RadiansPerSecond), RotationsPerSecondPerSecond.of(120).in(RadiansPerSecondPerSecond));
     }
 

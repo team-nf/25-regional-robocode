@@ -31,7 +31,7 @@ public final class Constants {
   }
 
   public class InitialConstants {
-    public static final double[] EncoderStartAngles = {264.4/2,168/2};
+    public static final double[] EncoderStartAngles = {264.4/2,230/2};
     // **** Second joint should be equal to 355 at zeroing position
   }
 
@@ -215,7 +215,7 @@ public final class Constants {
     public static final double[] CoralStage3 = {0.50, 180, 147};    //Coral Stage 3
     public static final double[] CoralStage4 = {1.19, 180, 140};    //Coral Stage 4
     public static final double[] CoralCarry = {0.32, 160, 270};    //Coral Carry
-    public static final double[] AlgaeThrowNet = {1.36, 180, 175};    //Algae Shoot
+    public static final double[] AlgaeThrowNet = {1.355, 180, 175};    //Algae Shoot
     public static final double[] AlgaeRecoverNet = {1.38, 175, 150};    //Algae Recover After Net
     public static final double[] AlgaeThrowProcessor = {0.09, 270, 130};    //Algae Shoot
     public static final double[] AlgaeStage23 = {0.28, 250, 150};     //Algae Stage 2-3
@@ -234,8 +234,8 @@ public final class Constants {
     public static final double[] stage3Pos18R  = {2.97,3.95,0};
     public static final double[] stage4Pos18L  = {2.96,4.29,0};
     public static final double[] stage3Pos18L  = {2.96,4.29,0};
-    public static final double[] algae3Pos     = {2.84,3.9,180};
-    public static final double[] algae2Pos     = {2.84,3.9,180};
+    public static final double[] algae3Pos     = {2.84,3.8,180};
+    public static final double[] algae2Pos     = {2.84,3.8,180};
     public static final double[] checkTagPos18 = {2.3,4,0};
 
     public static final double[] algaeNetPos14       = {1.5,6,0};
