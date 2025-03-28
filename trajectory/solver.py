@@ -1,0 +1,1 @@
+<Insert full solver.py content from earlier>

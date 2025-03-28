@@ -1,0 +1,1 @@
+<Insert full generate_trajectory.py content from earlier>

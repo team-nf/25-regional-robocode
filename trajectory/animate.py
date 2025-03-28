@@ -1,0 +1,1 @@
+<Insert full animate.py content from earlier>
